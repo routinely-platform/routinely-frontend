@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Routinely — 화면 설계 v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:opsz,wght@6..12,400;6..12,500;6..12,600;6..12,700;6..12,800;6..12,900&display=swap" rel="stylesheet">
+<style>
+
+:root {
+  --cr:       #DC3545;
+  --cr-dark:  #BF2233;
+  --cr-tint:  #FDEAEC;
+  --cr-mid:   rgba(220,53,69,0.12);
+  --ok:       #10B981;
+  --ok-tint:  #D1FAE5;
+  --ok-text:  #065F46;
+  --warn:     #F59E0B;
+  --warn-tint:#FEF3C7;
+  --warn-text:#92400E;
+  --purple:   #7C3AED;
+  --pur-tint: #EDE9FE;
+  --g9:  #0F172A;
+  --g8:  #1E293B;
+  --g7:  #334155;
+  --g6:  #64748B;
+  --g5:  #94A3B8;
+  --g4:  #CBD5E1;
+  --g3:  #E2E8F0;
+  --g2:  #F1F5F9;
+  --g1:  #F8FAFC;
+  --white: #FFFFFF;
+  --font: 'Nunito Sans', -apple-system, sans-serif;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #F0F2F5; font-family: var(--font); padding: 32px; color: var(--g9); }
+
+/* ── 페이지 헤더 ── */
+.ph { display: flex; align-items: baseline; gap: 12px; margin-bottom: 8px; }
+.ph-title { font-size: 22px; font-weight: 900; color: var(--g9); letter-spacing: -0.5px; }
+.ph-title span { color: var(--cr); }
+.ph-sub { font-size: 11px; color: var(--g5); letter-spacing: 1px; text-transform: uppercase; }
+.version-note { font-size: 12px; color: var(--g5); margin-bottom: 24px; }
+.version-note span { color: var(--cr); font-weight: 700; }
+
+/* ── 탭 ── */
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--g3); }
+.tab {
+  font-family: var(--font); font-size: 11px; font-weight: 700;
+  padding: 6px 14px; border-radius: 100px;
+  border: 1.5px solid var(--g3); background: var(--white);
+  color: var(--g6); cursor: pointer; white-space: nowrap;
+  transition: all .15s;
+}
+.tab:hover { border-color: var(--g4); color: var(--g9); }
+.tab.active { background: var(--cr); border-color: var(--cr); color: var(--white); }
+
+.screen { display: none; }
+.screen.active { display: block; }
+.screen-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--g5); margin-bottom: 10px; }
+
+/* ── 브라우저 프레임 ── */
+.frame { border-radius: var(--r-xl); overflow: hidden; box-shadow: 0 2px 20px rgba(0,0,0,0.08); background: var(--white); }
+.frame-bar { background: var(--g2); padding: 9px 16px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--g3); }
+.dots { display: flex; gap: 5px; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--g4); }
+.url { flex: 1; background: var(--white); border: 1px solid var(--g3); border-radius: 6px; padding: 3px 12px; font-size: 10px; color: var(--g5); font-family: monospace; }
+
+/* ── 앱 레이아웃 ── */
+.app { display: flex; min-height: 560px; }
+
+/* ── 사이드바 ── */
+.sb { width: 220px; flex-shrink: 0; border-right: 1px solid var(--g3); background: var(--white); display: flex; flex-direction: column; }
+
+.sb-top { padding: 18px 16px 14px; border-bottom: 1px solid var(--g3); display: flex; align-items: center; gap: 9px; }
+.sb-logo { font-family: var(--font); font-weight: 900; font-size: 17px; letter-spacing: -0.5px; color: var(--g9); }
+.sb-logo span { color: var(--cr); }
+
+.sb-section { padding: 16px 16px 4px; font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--g5); }
+
+.nav { display: flex; flex-direction: column; gap: 1px; padding: 4px 10px; }
+.ni {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--r-sm);
+  font-size: 13px; font-weight: 600; color: var(--g6); cursor: pointer;
+}
+.ni:hover { background: var(--g2); color: var(--g9); }
+.ni.on { background: var(--cr-tint); color: var(--cr); }
+.ni-ic { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.ni.on .ni-ic { background: var(--cr); }
+.ni-badge { margin-left: auto; background: var(--cr); color: var(--white); font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 100px; min-width: 18px; text-align: center; }
+
+.sb-bottom { margin-top: auto; padding: 12px 14px; border-top: 1px solid var(--g3); display: flex; align-items: center; gap: 10px; }
+.sb-av { width: 32px; height: 32px; border-radius: 50%; background: var(--cr-tint); color: var(--cr); font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 2px solid rgba(220,53,69,0.2); }
+.sb-uname { font-size: 12px; font-weight: 700; color: var(--g9); }
+.sb-streak { font-size: 10px; color: var(--g5); }
+
+/* ── 콘텐츠 ── */
+.main { flex: 1; background: var(--g2); padding: 24px 26px; overflow: hidden; }
+
+.page-hd { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.page-title { font-size: 20px; font-weight: 900; color: var(--g9); letter-spacing: -0.5px; margin-bottom: 3px; }
+.page-sub { font-size: 12px; color: var(--g5); font-weight: 500; }
+
+/* ── 버튼 ── */
+.btn { display: inline-flex; align-items: center; gap: 5px; padding: 8px 16px; border-radius: var(--r-sm); font-family: var(--font); font-size: 12px; font-weight: 700; cursor: pointer; border: none; transition: all .12s; }
+.btn-cr { background: var(--cr); color: var(--white); }
+.btn-cr:hover { background: var(--cr-dark); }
+.btn-outline { background: var(--white); color: var(--g7); border: 1.5px solid var(--g3); }
+.btn-outline:hover { border-color: var(--g4); }
+.btn-ghost { background: transparent; color: var(--g6); border: 1.5px solid var(--g3); }
+.btn-sm { padding: 5px 11px; font-size: 11px; }
+.btn-xs { padding: 3px 9px; font-size: 10px; border-radius: 6px; }
+
+/* ── 카드 ── */
+.card { background: var(--white); border: 1px solid var(--g3); border-radius: var(--r-lg); padding: 14px 16px; margin-bottom: 8px; }
+.card:hover { border-color: var(--g4); }
+.card-title { font-size: 13px; font-weight: 700; color: var(--g9); margin-bottom: 3px; }
+.card-sub { font-size: 11px; color: var(--g5); font-weight: 500; }
+.card-row { display: flex; justify-content: space-between; align-items: center; }
+
+/* ── 배지 ── */
+.badge { display: inline-block; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 100px; }
+.b-ok   { background: var(--ok-tint);   color: var(--ok-text); }
+.b-cr   { background: var(--cr-tint);   color: var(--cr); }
+.b-warn { background: var(--warn-tint); color: var(--warn-text); }
+.b-gray { background: var(--g2);        color: var(--g6); }
+.b-pur  { background: var(--pur-tint);  color: var(--purple); }
+
+/* ── 프로그레스 ── */
+.prog { height: 6px; background: var(--g2); border-radius: 100px; overflow: hidden; margin: 6px 0; }
+.pf   { height: 100%; border-radius: 100px; }
+
+/* ── 그리드 ── */
+.g2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+.g3 { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 10px; }
+.g4 { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
+
+/* ── 스탯 카드 ── */
+.stat { background: var(--white); border: 1px solid var(--g3); border-radius: var(--r-lg); padding: 14px 16px; }
+.stat-label { font-size: 10px; font-weight: 700; color: var(--g5); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.stat-val { font-size: 26px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+.stat-note { font-size: 11px; color: var(--g5); margin-top: 5px; font-weight: 500; }
+
+/* ── 인풋 ── */
+.inp { width: 100%; background: var(--g1); border: 1.5px solid var(--g3); border-radius: var(--r-sm); padding: 10px 13px; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--g9); outline: none; margin-bottom: 12px; }
+.inp:focus { border-color: var(--cr); background: var(--white); box-shadow: 0 0 0 3px var(--cr-tint); }
+.inp::placeholder { color: var(--g4); }
+.inp-label { font-size: 11px; font-weight: 700; color: var(--g7); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── 옵션 버튼 ── */
+.opt-grp { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
+.opt { font-family: var(--font); font-size: 12px; font-weight: 600; padding: 7px 13px; border-radius: var(--r-sm); border: 1.5px solid var(--g3); background: var(--white); color: var(--g6); cursor: pointer; }
+.opt.sel { border-color: var(--cr); background: var(--cr-tint); color: var(--cr); }
+
+/* ── 토글 ── */
+.toggle { width: 38px; height: 20px; border-radius: 100px; display: flex; align-items: center; padding: 2px; cursor: pointer; flex-shrink: 0; }
+.toggle.on  { background: var(--cr); justify-content: flex-end; }
+.toggle.off { background: var(--g4); justify-content: flex-start; }
+.toggle-th  { width: 16px; height: 16px; border-radius: 50%; background: var(--white); }
+
+/* ── 아바타 ── */
+.av { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+.av-cr { background: var(--cr-tint); color: var(--cr); }
+.av-ok { background: var(--ok-tint); color: var(--ok-text); }
+.av-warn { background: var(--warn-tint); color: var(--warn-text); }
+.av-pur { background: var(--pur-tint); color: var(--purple); }
+.av-blue { background: #DBEAFE; color: #1E40AF; }
+
+/* ── 주간 달성 ── */
+.week-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+.wc { border-radius: var(--r-sm); padding: 6px 3px; text-align: center; }
+.wc-day { font-size: 9px; font-weight: 700; color: var(--g5); margin-bottom: 4px; }
+.wc-val { font-size: 11px; font-weight: 800; }
+.wc-ok   { background: var(--ok-tint);   } .wc-ok   .wc-val { color: var(--ok); }
+.wc-warn { background: var(--warn-tint); } .wc-warn .wc-val { color: var(--warn); }
+.wc-cr   { background: var(--cr-tint);   } .wc-cr   .wc-val { color: var(--cr); }
+.wc-emp  { background: var(--g2);        } .wc-emp  .wc-val { color: var(--g4); }
+
+/* ── 달력 ── */
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 3px; }
+.cc { aspect-ratio:1; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; }
+.cc-ok    { background: var(--ok-tint); color: var(--ok-text); }
+.cc-miss  { background: var(--cr-tint); color: var(--cr); }
+.cc-today { background: var(--cr); color: var(--white); }
+.cc-emp   { color: var(--g3); }
+
+/* ── 로그인 ── */
+.auth-wrap { display: flex; min-height: 560px; }
+.auth-left { flex: 1; background: var(--g9); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 48px 40px; position: relative; overflow: hidden; }
+.auth-left::before { content:''; position:absolute; width:300px; height:300px; border-radius:50%; background: rgba(220,53,69,0.12); top:-60px; right:-80px; }
+.auth-left::after  { content:''; position:absolute; width:200px; height:200px; border-radius:50%; background: rgba(220,53,69,0.08); bottom:-40px; left:-40px; }
+.auth-right { width: 400px; flex-shrink: 0; background: var(--white); display: flex; align-items: center; justify-content: center; padding: 40px 44px; }
+.auth-logo-text { font-family: var(--font); font-weight: 900; font-size: 32px; letter-spacing: -1px; color: var(--white); margin-bottom: 8px; }
+.auth-logo-text span { color: var(--cr); }
+.auth-tagline { font-size: 13px; color: var(--g5); font-weight: 500; text-align: center; line-height: 1.7; margin-bottom: 36px; }
+.auth-preview { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: var(--r-lg); padding: 16px 18px; width: 100%; max-width: 280px; position: relative; z-index: 1; }
+.auth-form-wrap { width: 100%; }
+.auth-form-title { font-size: 24px; font-weight: 900; color: var(--g9); letter-spacing: -0.5px; margin-bottom: 4px; }
+.auth-form-sub { font-size: 12px; color: var(--g5); font-weight: 500; margin-bottom: 28px; }
+
+/* ── 피드 ── */
+.feed-card { background: var(--white); border: 1px solid var(--g3); border-radius: var(--r-lg); padding: 16px; margin-bottom: 10px; }
+.feed-photo { height: 88px; background: var(--g2); border-radius: var(--r-sm); margin: 10px 0; display: flex; align-items: center; justify-content: center; font-size: 11px; color: var(--g5); font-weight: 600; }
+.rxn { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; padding: 4px 10px; border: 1.5px solid var(--g3); border-radius: 100px; cursor: pointer; background: var(--white); color: var(--g6); }
+.rxn.on { background: var(--cr-tint); border-color: rgba(220,53,69,0.3); color: var(--cr); }
+
+/* ── 채팅 ── */
+.chat-wrap { display: flex; height: 460px; }
+.chat-list { width: 240px; border-right: 1px solid var(--g3); background: var(--white); flex-shrink: 0; }
+.chat-list-hd { padding: 14px 16px; border-bottom: 1px solid var(--g3); font-size: 13px; font-weight: 800; color: var(--g9); }
+.chat-room { padding: 12px 15px; border-bottom: 1px solid var(--g2); cursor: pointer; }
+.chat-room:hover { background: var(--g2); }
+.chat-room.on { background: var(--cr-tint); border-left: 3px solid var(--cr); }
+.cr-name { font-size: 12px; font-weight: 700; color: var(--g9); margin-bottom: 2px; }
+.cr-preview { font-size: 11px; color: var(--g5); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.chat-main { flex: 1; display: flex; flex-direction: column; background: var(--g2); }
+.chat-hd { padding: 12px 16px; border-bottom: 1px solid var(--g3); background: var(--white); display: flex; align-items: center; gap: 9px; }
+.chat-msgs { flex: 1; padding: 16px; overflow-y: auto; }
+.msg { max-width: 65%; margin-bottom: 10px; }
+.msg.me { margin-left: auto; }
+.msg-sender { font-size: 10px; font-weight: 700; color: var(--g5); margin-bottom: 3px; }
+.bubble { padding: 9px 13px; border-radius: 12px; font-size: 12px; font-weight: 500; line-height: 1.5; }
+.bubble.other { background: var(--white); border: 1px solid var(--g3); border-bottom-left-radius: 3px; color: var(--g9); }
+.bubble.me { background: var(--cr); color: var(--white); border-bottom-right-radius: 3px; }
+.msg-time { font-size: 10px; color: var(--g5); margin-top: 3px; font-weight: 500; }
+.msg-time.me { text-align: right; }
+.chat-input-bar { padding: 10px 14px; border-top: 1px solid var(--g3); background: var(--white); display: flex; gap: 8px; align-items: center; }
+.chat-inp { flex: 1; background: var(--g2); border: 1.5px solid var(--g3); border-radius: 100px; padding: 8px 16px; font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--g9); outline: none; }
+.chat-inp:focus { border-color: var(--cr); background: var(--white); }
+.chat-inp::placeholder { color: var(--g4); }
+
+/* ── 알림 ── */
+.notif-item { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--g2); align-items: flex-start; }
+.notif-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+.notif-ic { width: 36px; height: 36px; border-radius: var(--r-sm); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.notif-text { font-size: 12px; color: var(--g9); line-height: 1.5; flex: 1; font-weight: 500; }
+.notif-time { font-size: 10px; color: var(--g5); margin-top: 3px; font-weight: 600; }
+
+/* ── 랭킹 ── */
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--g2); }
+.rank-num { font-size: 13px; font-weight: 800; width: 20px; text-align: center; flex-shrink: 0; }
+.rank-bar { flex: 1; height: 5px; background: var(--g2); border-radius: 100px; overflow: hidden; }
+.rank-pct { font-size: 12px; font-weight: 800; width: 38px; text-align: right; flex-shrink: 0; }
+
+/* ── 폼 섹션 ── */
+.form-sec { background: var(--white); border: 1px solid var(--g3); border-radius: var(--r-lg); padding: 18px 20px; margin-bottom: 12px; }
+.form-sec-title { font-size: 11px; font-weight: 800; color: var(--g7); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--g2); }
+
+/* ── 마이페이지 ── */
+.profile-banner { background: linear-gradient(135deg, var(--g9) 0%, #1e293b 100%); border-radius: var(--r-lg); padding: 20px; margin-bottom: 14px; display: flex; align-items: center; gap: 14px; position: relative; overflow: hidden; }
+.profile-banner::before { content:''; position:absolute; width:180px; height:180px; border-radius:50%; background:rgba(220,53,69,0.15); right:-40px; top:-40px; }
+.profile-av { width: 52px; height: 52px; border-radius: 50%; background: var(--cr); color: var(--white); font-size: 20px; font-weight: 900; display: flex; align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid rgba(255,255,255,0.2); position: relative; z-index: 1; }
+.profile-info { flex: 1; position: relative; z-index: 1; }
+.profile-name { font-size: 16px; font-weight: 900; color: var(--white); margin-bottom: 2px; }
+.profile-email { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 500; }
+.profile-stats { display: flex; gap: 18px; margin-top: 10px; }
+.ps-item { text-align: center; }
+.ps-val { font-size: 15px; font-weight: 900; color: var(--white); line-height: 1; }
+.ps-label { font-size: 9px; color: rgba(255,255,255,0.5); font-weight: 700; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ── 칩 ── */
+.chip { display: inline-flex; align-items: center; font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 6px; background: var(--g2); color: var(--g6); margin-right: 4px; margin-bottom: 3px; }
+
+/* ── 섹션 헤더 ── */
+.sec-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sec-title { font-size: 11px; font-weight: 800; color: var(--g7); text-transform: uppercase; letter-spacing: 0.5px; }
+.sec-link { font-size: 11px; font-weight: 700; color: var(--cr); cursor: pointer; }
+
+</style>
+</head>
+<body>
+
+<div class="ph">
+  <div class="ph-title">routine<span>ly</span></div>
+  <span class="ph-sub">UI/UX 화면 설계 v3</span>
+</div>
+<div class="version-note">주요 화면 · White Base + Crimson <span>#DC3545</span> · Nunito Sans</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="sw('login',this)">01 로그인</div>
+  <div class="tab" onclick="sw('signup',this)">02 회원가입</div>
+  <div class="tab" onclick="sw('home',this)">03 홈/대시보드</div>
+  <div class="tab" onclick="sw('routine-list',this)">04 루틴 목록</div>
+  <div class="tab" onclick="sw('routine-create',this)">05 루틴 생성</div>
+  <div class="tab" onclick="sw('routine-detail',this)">06 루틴 상세</div>
+  <div class="tab" onclick="sw('challenge-list',this)">07 챌린지 목록</div>
+  <div class="tab" onclick="sw('challenge-create',this)">08 챌린지 생성</div>
+  <div class="tab" onclick="sw('challenge-detail',this)">09 챌린지 상세</div>
+  <div class="tab" onclick="sw('feed',this)">10 피드</div>
+  <div class="tab" onclick="sw('chat',this)">11 채팅</div>
+  <div class="tab" onclick="sw('notif',this)">12 알림</div>
+  <div class="tab" onclick="sw('mypage',this)">13 마이페이지</div>
+</div>
+
+<!-- ═══════ 01 로그인 ═══════ -->
+<div class="screen active" id="s-login">
+  <div class="screen-label">01 — 로그인</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/login</div></div>
+    <div class="auth-wrap">
+      <div class="auth-left">
+        <svg width="52" height="52" viewBox="0 0 200 200" fill="none" style="margin-bottom:16px;position:relative;z-index:1"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg>
+        <div class="auth-logo-text" style="position:relative;z-index:1">routine<span>ly</span></div>
+        <div class="auth-tagline" style="position:relative;z-index:1">매일의 루틴이 만드는<br>더 나은 나</div>
+        <div class="auth-preview">
+          <div style="font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">오늘의 달성률</div>
+          <div style="font-size:24px;font-weight:900;color:#DC3545;letter-spacing:-1px;margin-bottom:6px">83%</div>
+          <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:100px;margin-bottom:12px;overflow:hidden"><div style="width:83%;height:100%;background:#DC3545;border-radius:100px"></div></div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>아침 러닝 30분</span><span style="color:#10B981">완료</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.06)"><span>독서 20페이지</span><span style="color:#10B981">완료</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;color:rgba(255,255,255,0.7);padding:4px 0"><span>명상 10분</span><span style="color:#F59E0B">진행중</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-form-wrap">
+          <div class="auth-form-title">다시 왔군요 👋</div>
+          <div class="auth-form-sub">계정에 로그인해서 오늘의 루틴을 확인하세요</div>
+          <div class="inp-label">이메일</div>
+          <input class="inp" placeholder="hello@routinely.app"/>
+          <div class="inp-label">비밀번호</div>
+          <input class="inp" type="password" placeholder="••••••••" style="margin-bottom:8px"/>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--g6);cursor:pointer"><input type="checkbox" style="accent-color:var(--cr)"/> 로그인 유지</label>
+            <span style="font-size:12px;font-weight:700;color:var(--cr);cursor:pointer">비밀번호 찾기</span>
+          </div>
+          <button class="btn btn-cr" style="width:100%;padding:11px;font-size:13px;justify-content:center">로그인</button>
+          <div style="display:flex;align-items:center;gap:10px;margin:18px 0"><div style="flex:1;height:1px;background:var(--g3)"></div><span style="font-size:11px;font-weight:600;color:var(--g4)">또는</span><div style="flex:1;height:1px;background:var(--g3)"></div></div>
+          <div style="font-size:13px;text-align:center;color:var(--g5);font-weight:500">계정이 없으신가요? <span style="color:var(--cr);font-weight:800;cursor:pointer">회원가입</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 02 회원가입 ═══════ -->
+<div class="screen" id="s-signup">
+  <div class="screen-label">02 — 회원가입</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/signup</div></div>
+    <div class="auth-wrap">
+      <div class="auth-left">
+        <svg width="52" height="52" viewBox="0 0 200 200" fill="none" style="margin-bottom:16px;position:relative;z-index:1"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg>
+        <div class="auth-logo-text" style="position:relative;z-index:1">routine<span>ly</span></div>
+        <div class="auth-tagline" style="position:relative;z-index:1;margin-bottom:28px">루틴을 통해 더 나은 나를<br>만들어가는 여정을 시작하세요</div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:100%;max-width:280px;position:relative;z-index:1">
+          <div style="background:rgba(220,53,69,0.15);border:1px solid rgba(220,53,69,0.2);border-radius:var(--r-sm);padding:10px 13px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8)">✅ 루틴을 만들고 매일 실천해요</div>
+          <div style="background:rgba(220,53,69,0.15);border:1px solid rgba(220,53,69,0.2);border-radius:var(--r-sm);padding:10px 13px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8)">🏆 챌린지로 함께 성장해요</div>
+          <div style="background:rgba(220,53,69,0.15);border:1px solid rgba(220,53,69,0.2);border-radius:var(--r-sm);padding:10px 13px;font-size:11px;font-weight:600;color:rgba(255,255,255,0.8)">🔥 서로 응원하며 더 강해져요</div>
+        </div>
+      </div>
+      <div class="auth-right">
+        <div class="auth-form-wrap">
+          <div class="auth-form-title">시작해볼까요 🚀</div>
+          <div class="auth-form-sub">무료로 가입하고 루틴을 만들어보세요</div>
+          <div class="inp-label">닉네임 <span style="color:var(--g4);font-weight:500">(2~20자)</span></div>
+          <input class="inp" placeholder="어떻게 불러드릴까요?"/>
+          <div class="inp-label">이메일</div>
+          <input class="inp" placeholder="hello@routinely.app"/>
+          <div class="inp-label">비밀번호 <span style="color:var(--g4);font-weight:500">(8자 이상)</span></div>
+          <input class="inp" type="password" placeholder="••••••••"/>
+          <div class="inp-label">비밀번호 확인</div>
+          <input class="inp" type="password" placeholder="••••••••" style="margin-bottom:8px"/>
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--g6);cursor:pointer;margin-bottom:18px"><input type="checkbox" style="accent-color:var(--cr)"/> 알림 수신 동의 <span style="color:var(--g4);font-weight:500">(선택)</span></label>
+          <button class="btn btn-cr" style="width:100%;padding:11px;font-size:13px;justify-content:center">가입하기</button>
+          <div style="display:flex;align-items:center;gap:10px;margin:16px 0"><div style="flex:1;height:1px;background:var(--g3)"></div><span style="font-size:11px;font-weight:600;color:var(--g4)">또는</span><div style="flex:1;height:1px;background:var(--g3)"></div></div>
+          <div style="font-size:13px;text-align:center;color:var(--g5);font-weight:500">이미 계정이 있으신가요? <span style="color:var(--cr);font-weight:800;cursor:pointer">로그인</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 03 홈/대시보드 ═══════ -->
+<div class="screen" id="s-home">
+  <div class="screen-label">03 — 홈 / 대시보드</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/home</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림<span class="ni-badge">2</span></div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div class="page-title">안녕하세요, 김루틴님 👋</div><div class="page-sub">2026년 3월 3일 화요일 · 오늘 루틴 5개 중 2개 완료</div></div>
+          <button class="btn btn-cr btn-sm">+ 루틴 추가</button>
+        </div>
+        <div class="g4" style="margin-bottom:18px">
+          <div class="stat"><div class="stat-label">오늘 달성률</div><div class="stat-val" style="color:var(--cr)">40%</div><div class="prog"><div class="pf" style="width:40%;background:var(--cr)"></div></div><div class="stat-note">2/5 완료</div></div>
+          <div class="stat"><div class="stat-label">연속 달성</div><div class="stat-val">🔥 12</div><div class="stat-note">역대 최고 18일</div></div>
+          <div class="stat"><div class="stat-label">이번 달</div><div class="stat-val" style="color:var(--ok)">78%</div><div class="stat-note" style="color:var(--ok)">↑ 지난달 +12%</div></div>
+          <div class="stat"><div class="stat-label">참여 챌린지</div><div class="stat-val">3개</div><div class="stat-note">진행중</div></div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="sec-hd"><div class="sec-title">오늘의 루틴</div><span class="sec-link">전체 보기 →</span></div>
+            <div class="card">
+              <div class="card-row">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="card-title">아침 러닝 30분</div><div class="card-sub">🏃 운동 · 07:00 · 매일</div></div></div>
+                <span class="badge b-ok">완료</span>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-row">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="card-title">독서 20페이지</div><div class="card-sub">📚 독서 · 09:00 · 매일</div></div></div>
+                <span class="badge b-ok">완료</span>
+              </div>
+            </div>
+            <div class="card" style="border-color:rgba(220,53,69,0.25);background:var(--cr-tint)">
+              <div class="card-row">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--cr);flex-shrink:0"></div><div><div class="card-title">명상 10분</div><div class="card-sub">🧘 생활습관 · 12:00 · 매일</div></div></div>
+                <div style="display:flex;align-items:center;gap:6px"><span class="badge b-pur">진행중</span><button class="btn btn-cr btn-xs">완료</button></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-row">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;border:2px solid var(--g3);flex-shrink:0"></div><div><div class="card-title">영어 단어 암기</div><div class="card-sub">📝 공부 · 20:00 · 주5회</div></div></div>
+                <span class="badge b-gray">예정</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-hd" style="margin-bottom:10px"><div class="sec-title">이번 주 달성 현황</div></div>
+            <div class="week-grid" style="margin-bottom:18px">
+              <div class="wc wc-ok"><div class="wc-day">월</div><div class="wc-val">100%</div></div>
+              <div class="wc wc-warn"><div class="wc-day">화</div><div class="wc-val">40%</div></div>
+              <div class="wc wc-emp"><div class="wc-day">수</div><div class="wc-val">—</div></div>
+              <div class="wc wc-emp"><div class="wc-day">목</div><div class="wc-val">—</div></div>
+              <div class="wc wc-ok"><div class="wc-day">금</div><div class="wc-val">80%</div></div>
+              <div class="wc wc-cr"><div class="wc-day">토</div><div class="wc-val">0%</div></div>
+              <div class="wc wc-emp"><div class="wc-day">일</div><div class="wc-val">—</div></div>
+            </div>
+            <div class="sec-hd"><div class="sec-title">내 챌린지</div><span class="sec-link">전체 보기 →</span></div>
+            <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span class="card-title">🏃 3월 러닝 챌린지</span><span style="font-size:13px;font-weight:800;color:var(--ok)">75%</span></div><div class="prog"><div class="pf" style="width:75%;background:var(--ok)"></div></div><span style="font-size:11px;color:var(--g5);font-weight:500">8명 참여 · D-18</span></div>
+            <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span class="card-title">📚 독서 100일 챌린지</span><span style="font-size:13px;font-weight:800;color:var(--purple)">60%</span></div><div class="prog"><div class="pf" style="width:60%;background:var(--purple)"></div></div><span style="font-size:11px;color:var(--g5);font-weight:500">5명 참여 · D-40</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 04 루틴 목록 ═══════ -->
+<div class="screen" id="s-routine-list">
+  <div class="screen-label">04 — 루틴 목록</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/routines</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div class="page-title">루틴 관리</div><div class="page-sub">내 루틴을 만들고 수행 현황을 확인하세요</div></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm">📅 달력 보기</button><button class="btn btn-cr btn-sm">+ 루틴 추가</button></div>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+          <div style="padding:6px 14px;border-radius:100px;background:var(--cr);color:white;font-size:11px;font-weight:700;cursor:pointer">전체</div>
+          <div style="padding:6px 14px;border-radius:100px;background:var(--white);border:1.5px solid var(--g3);color:var(--g6);font-size:11px;font-weight:600;cursor:pointer">🏃 운동</div>
+          <div style="padding:6px 14px;border-radius:100px;background:var(--white);border:1.5px solid var(--g3);color:var(--g6);font-size:11px;font-weight:600;cursor:pointer">📚 독서</div>
+          <div style="padding:6px 14px;border-radius:100px;background:var(--white);border:1.5px solid var(--g3);color:var(--g6);font-size:11px;font-weight:600;cursor:pointer">📝 공부</div>
+          <div style="padding:6px 14px;border-radius:100px;background:var(--white);border:1.5px solid var(--g3);color:var(--g6);font-size:11px;font-weight:600;cursor:pointer">🧘 생활습관</div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="sec-title" style="margin-bottom:10px">활성 루틴 (5)</div>
+            <div class="card">
+              <div class="card-row" style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🏃</span><div><div class="card-title">아침 러닝 30분</div><div class="card-sub">매일 · 07:00</div></div></div><span class="badge b-ok">완료</span></div>
+              <div style="margin-bottom:6px"><span class="chip">운동</span><span class="chip">03.01~</span><span class="chip">3월 러닝</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:600;color:var(--g5)">이번 달 달성률</span><span style="font-size:12px;font-weight:800;color:var(--ok)">83%</span></div>
+              <div class="prog"><div class="pf" style="width:83%;background:var(--ok)"></div></div>
+              <div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs">✏️ 수정</button><button class="btn btn-ghost btn-xs">📋 상세</button><button class="btn btn-xs" style="background:var(--cr-tint);color:var(--cr);border:1px solid rgba(220,53,69,0.2);margin-left:auto">삭제</button></div>
+            </div>
+            <div class="card">
+              <div class="card-row" style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">📚</span><div><div class="card-title">독서 20페이지</div><div class="card-sub">매일 · 09:00</div></div></div><span class="badge b-ok">완료</span></div>
+              <div style="margin-bottom:6px"><span class="chip">독서</span><span class="chip">02.15~</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:600;color:var(--g5)">이번 달 달성률</span><span style="font-size:12px;font-weight:800;color:var(--ok)">90%</span></div>
+              <div class="prog"><div class="pf" style="width:90%;background:var(--ok)"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-row" style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:18px">🧘</span><div><div class="card-title">명상 10분</div><div class="card-sub">매일 · 12:00</div></div></div><span class="badge b-pur">진행중</span></div>
+              <div style="margin-bottom:6px"><span class="chip">생활습관</span><span class="chip">03.01~</span></div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:600;color:var(--g5)">이번 달 달성률</span><span style="font-size:12px;font-weight:800;color:var(--warn)">60%</span></div>
+              <div class="prog"><div class="pf" style="width:60%;background:var(--warn)"></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-title" style="margin-bottom:10px">3월 수행 달력</div>
+            <div class="card" style="padding:14px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><span style="font-size:12px;font-weight:800;color:var(--g9)">2026년 3월</span><div style="display:flex;gap:4px"><button class="btn btn-ghost btn-xs" style="padding:2px 8px">◀</button><button class="btn btn-ghost btn-xs" style="padding:2px 8px">▶</button></div></div>
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px;text-align:center"><span style="font-size:9px;font-weight:700;color:var(--g4)">월</span><span style="font-size:9px;font-weight:700;color:var(--g4)">화</span><span style="font-size:9px;font-weight:700;color:var(--g4)">수</span><span style="font-size:9px;font-weight:700;color:var(--g4)">목</span><span style="font-size:9px;font-weight:700;color:var(--g4)">금</span><span style="font-size:9px;font-weight:700;color:var(--g4)">토</span><span style="font-size:9px;font-weight:700;color:var(--g4)">일</span></div>
+              <div class="cal-grid">
+                <div class="cc cc-emp"></div><div class="cc cc-emp"></div><div class="cc cc-emp"></div><div class="cc cc-emp"></div><div class="cc cc-emp"></div>
+                <div class="cc cc-ok">1</div><div class="cc cc-miss">2</div>
+                <div class="cc cc-today">3</div><div class="cc cc-emp">4</div><div class="cc cc-emp">5</div><div class="cc cc-emp">6</div><div class="cc cc-emp">7</div>
+                <div class="cc cc-ok">8</div><div class="cc cc-ok">9</div>
+                <div class="cc cc-ok">10</div><div class="cc cc-ok">11</div><div class="cc cc-ok">12</div><div class="cc cc-ok">13</div><div class="cc cc-ok">14</div>
+                <div class="cc cc-ok">15</div><div class="cc cc-miss">16</div>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:10px"><span style="font-size:10px;font-weight:700;color:var(--ok-text)">■ 완료</span><span style="font-size:10px;font-weight:700;color:var(--cr)">■ 미완료</span><span style="font-size:10px;font-weight:700;color:var(--cr)">■ 오늘</span></div>
+            </div>
+            <div class="card" style="margin-top:8px;padding:14px">
+              <div class="sec-title" style="margin-bottom:8px">최근 6개월 활동</div>
+              <div style="display:flex;gap:2px;flex-wrap:wrap">
+                <div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--g2)"></div><div style="width:11px;height:11px;border-radius:3px;background:#6EE7B7"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--g2)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:#6EE7B7"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--g2)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:#6EE7B7"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--g2)"></div><div style="width:11px;height:11px;border-radius:3px;background:var(--ok-tint)"></div>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:6px;align-items:center"><span style="font-size:10px;font-weight:600;color:var(--g5)">낮음</span><div style="display:flex;gap:2px"><div style="width:9px;height:9px;border-radius:2px;background:var(--ok-tint)"></div><div style="width:9px;height:9px;border-radius:2px;background:#6EE7B7"></div><div style="width:9px;height:9px;border-radius:2px;background:var(--ok)"></div></div><span style="font-size:10px;font-weight:600;color:var(--g5)">높음</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 05 루틴 생성 ═══════ -->
+<div class="screen" id="s-routine-create">
+  <div class="screen-label">05 — 루틴 생성</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/routines/new</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅</div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:5px;cursor:pointer">← 루틴 목록으로</div><div class="page-title">루틴 생성</div></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm">취소</button><button class="btn btn-cr btn-sm">저장하기</button></div>
+        </div>
+        <div style="max-width:600px">
+          <div class="form-sec">
+            <div class="form-sec-title">기본 정보</div>
+            <div class="inp-label">루틴 이름</div>
+            <input class="inp" placeholder="예) 아침 러닝 30분"/>
+            <div class="inp-label">카테고리</div>
+            <div class="opt-grp"><div class="opt sel">🏃 운동</div><div class="opt">📚 독서</div><div class="opt">📝 공부</div><div class="opt">🧘 생활습관</div></div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">반복 설정</div>
+            <div class="inp-label">반복 유형</div>
+            <div class="opt-grp"><div class="opt sel">매일</div><div class="opt">주N회</div><div class="opt">특정 요일</div><div class="opt">월N회</div></div>
+            <div class="inp-label">수행 요일 <span style="color:var(--g4);font-weight:500">(복수 선택)</span></div>
+            <div class="opt-grp"><div class="opt sel">월</div><div class="opt sel">화</div><div class="opt sel">수</div><div class="opt sel">목</div><div class="opt sel">금</div><div class="opt">토</div><div class="opt">일</div></div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">시간 및 알림</div>
+            <div class="inp-label">선호 수행 시간</div>
+            <input class="inp" type="time" value="07:00" style="width:180px"/>
+            <div style="font-size:11px;font-weight:600;color:var(--g5);margin:-4px 0 14px">설정한 시간에 리마인더 알림이 발송됩니다</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div><div style="font-size:13px;font-weight:700;color:var(--g9)">루틴 시작 알림</div><div style="font-size:11px;font-weight:500;color:var(--g5);margin-top:2px">선호 시간에 알림을 받아요</div></div>
+              <div class="toggle on"><div class="toggle-th"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 06 루틴 상세 ═══════ -->
+<div class="screen" id="s-routine-detail">
+  <div class="screen-label">06 — 루틴 상세</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/routines/1</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅</div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:12px;cursor:pointer">← 루틴 목록으로</div>
+        <div class="page-hd">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:var(--r-lg);background:var(--ok-tint);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏃</div>
+            <div><div class="page-title" style="margin-bottom:4px">아침 러닝 30분</div><div style="display:flex;gap:5px"><span class="badge b-ok">활성</span><span class="chip">운동</span><span class="chip">매일 · 07:00</span><span class="chip">03.01~</span></div></div>
+          </div>
+          <div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm">✏️ 수정</button><button class="btn btn-ghost btn-sm">⏸ 일시정지</button><button class="btn btn-sm" style="background:var(--cr-tint);color:var(--cr);border:1px solid rgba(220,53,69,0.2)">🗑 삭제</button></div>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="g2" style="gap:8px;margin-bottom:14px">
+              <div class="stat"><div class="stat-label">누적 완료</div><div class="stat-val" style="color:var(--ok);font-size:22px">47회</div></div>
+              <div class="stat"><div class="stat-label">최장 스트릭</div><div class="stat-val" style="font-size:22px">🔥 18일</div></div>
+              <div class="stat"><div class="stat-label">이번 달 달성률</div><div class="stat-val" style="color:var(--cr);font-size:22px">83%</div></div>
+              <div class="stat"><div class="stat-label">전체 달성률</div><div class="stat-val" style="font-size:22px">76%</div></div>
+            </div>
+            <div class="sec-title" style="margin-bottom:8px">오늘 완료 처리</div>
+            <div class="card" style="border-color:rgba(16,185,129,0.3);background:#F0FDF4">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:13px;font-weight:700;color:var(--g9)">2026년 3월 3일</span><span class="badge b-ok">완료</span></div>
+              <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:10px">완료 시각: 07:23</div>
+              <div style="height:64px;background:var(--g2);border:1.5px dashed var(--g3);border-radius:var(--r-sm);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--g4);margin-bottom:8px">📸 인증 사진 첨부</div>
+              <textarea style="width:100%;background:var(--white);border:1.5px solid var(--g3);border-radius:var(--r-sm);padding:8px 11px;font-family:var(--font);font-size:11px;font-weight:500;color:var(--g9);resize:none;outline:none;height:52px" placeholder="한 줄 메모 (선택)"></textarea>
+            </div>
+          </div>
+          <div>
+            <div class="sec-title" style="margin-bottom:10px">최근 30일 달성 캘린더</div>
+            <div class="card" style="padding:14px">
+              <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:6px;text-align:center"><span style="font-size:9px;font-weight:700;color:var(--g4)">월</span><span style="font-size:9px;font-weight:700;color:var(--g4)">화</span><span style="font-size:9px;font-weight:700;color:var(--g4)">수</span><span style="font-size:9px;font-weight:700;color:var(--g4)">목</span><span style="font-size:9px;font-weight:700;color:var(--g4)">금</span><span style="font-size:9px;font-weight:700;color:var(--g4)">토</span><span style="font-size:9px;font-weight:700;color:var(--g4)">일</span></div>
+              <div class="cal-grid">
+                <div class="cc cc-ok">2/2</div><div class="cc cc-ok">2/3</div><div class="cc cc-ok">2/4</div><div class="cc cc-miss">2/5</div><div class="cc cc-ok">2/6</div><div class="cc cc-ok">2/7</div><div class="cc cc-ok">2/8</div>
+                <div class="cc cc-ok">2/9</div><div class="cc cc-ok">2/10</div><div class="cc cc-ok">2/11</div><div class="cc cc-ok">2/12</div><div class="cc cc-ok">2/13</div><div class="cc cc-miss">2/14</div><div class="cc cc-ok">2/15</div>
+                <div class="cc cc-ok">2/16</div><div class="cc cc-ok">2/17</div><div class="cc cc-ok">2/18</div><div class="cc cc-ok">2/19</div><div class="cc cc-ok">2/20</div><div class="cc cc-ok">2/21</div><div class="cc cc-ok">2/22</div>
+                <div class="cc cc-ok">3/1</div><div class="cc cc-miss">3/2</div><div class="cc cc-today">3/3</div><div class="cc cc-emp">3/4</div><div class="cc cc-emp">3/5</div><div class="cc cc-emp">3/6</div><div class="cc cc-emp">3/7</div>
+              </div>
+              <div style="display:flex;gap:12px;margin-top:10px"><span style="font-size:10px;font-weight:700;color:var(--ok-text)">■ 완료</span><span style="font-size:10px;font-weight:700;color:var(--cr)">■ 미완료</span><span style="font-size:10px;font-weight:700;color:var(--cr)">■ 오늘</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 07 챌린지 목록 ═══════ -->
+<div class="screen" id="s-challenge-list">
+  <div class="screen-label">07 — 챌린지 목록</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/challenges</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div class="page-title">챌린지</div><div class="page-sub">함께하면 더 강해져요</div></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm">🔗 코드로 참여</button><button class="btn btn-cr btn-sm">+ 만들기</button></div>
+        </div>
+        <div style="display:flex;border-bottom:2px solid var(--g3);margin-bottom:16px">
+          <div style="padding:8px 18px;font-size:13px;font-weight:800;color:var(--cr);border-bottom:2px solid var(--cr);cursor:pointer;margin-bottom:-2px">참여 중 (3)</div>
+          <div style="padding:8px 18px;font-size:13px;font-weight:700;color:var(--g5);cursor:pointer">탐색</div>
+        </div>
+        <div class="g2" style="margin-bottom:20px">
+          <div class="card">
+            <div class="card-row" style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--ok-tint);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">🏃</div><div><div class="card-title">3월 러닝 챌린지</div><div class="card-sub">운동 · 8명 참여</div></div></div><span class="badge b-ok">진행중</span></div>
+            <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:5px">주 5회 러닝 · 03.01~03.31</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:var(--g6)">내 달성률</span><span style="font-size:13px;font-weight:800;color:var(--ok)">75%</span></div>
+            <div class="prog"><div class="pf" style="width:75%;background:var(--ok)"></div></div>
+            <div style="display:flex;gap:4px;margin:8px 0"><div class="av av-cr" style="width:24px;height:24px;font-size:9px">김</div><div class="av av-ok" style="width:24px;height:24px;font-size:9px">이</div><div class="av av-warn" style="width:24px;height:24px;font-size:9px">박</div><span style="font-size:11px;font-weight:600;color:var(--g5);display:flex;align-items:center;margin-left:4px">+5</span></div>
+            <button class="btn btn-cr btn-sm" style="width:100%;justify-content:center">상세 보기</button>
+          </div>
+          <div class="card">
+            <div class="card-row" style="margin-bottom:6px"><div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--pur-tint);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">📚</div><div><div class="card-title">독서 100일 챌린지</div><div class="card-sub">독서 · 5명 참여</div></div></div><span class="badge b-ok">진행중</span></div>
+            <div style="font-size:11px;font-weight:600;color:var(--g5);margin-bottom:5px">매일 20페이지 · 01.01~04.10</div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:3px"><span style="font-size:11px;font-weight:700;color:var(--g6)">내 달성률</span><span style="font-size:13px;font-weight:800;color:var(--purple)">60%</span></div>
+            <div class="prog"><div class="pf" style="width:60%;background:var(--purple)"></div></div>
+            <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px">상세 보기</button>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div style="flex:1;height:1px;background:var(--g3)"></div><span style="font-size:11px;font-weight:700;color:var(--g4)">인기 챌린지 탐색</span><div style="flex:1;height:1px;background:var(--g3)"></div></div>
+        <div style="margin-bottom:12px"><input class="inp" style="width:300px;margin:0" placeholder="챌린지 검색..."/></div>
+        <div class="g2">
+          <div class="card"><div class="card-row" style="margin-bottom:5px"><div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:var(--r-sm);background:var(--cr-tint);display:flex;align-items:center;justify-content:center;font-size:18px">🧘</div><div><div class="card-title">마음챙김 21일</div><div class="card-sub">생활습관 · 23명 참여</div></div></div><span class="badge b-gray">모집중</span></div><div style="font-size:11px;font-weight:600;color:var(--g5);margin:4px 0">매일 명상 10분 · 공개</div><button class="btn btn-cr btn-sm" style="width:100%;justify-content:center;margin-top:8px">참여하기</button></div>
+          <div class="card"><div class="card-row" style="margin-bottom:5px"><div style="display:flex;align-items:center;gap:8px"><div style="width:36px;height:36px;border-radius:var(--r-sm);background:#DBEAFE;display:flex;align-items:center;justify-content:center;font-size:18px">📝</div><div><div class="card-title">영어 일기 30일</div><div class="card-sub">공부 · 16명 참여</div></div></div><span class="badge b-gray">모집중</span></div><div style="font-size:11px;font-weight:600;color:var(--g5);margin:4px 0">매일 영어 일기 1편 · 공개</div><button class="btn btn-cr btn-sm" style="width:100%;justify-content:center;margin-top:8px">참여하기</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 08 챌린지 생성 ═══════ -->
+<div class="screen" id="s-challenge-create">
+  <div class="screen-label">08 — 챌린지 생성</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/challenges/new</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅</div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:5px;cursor:pointer">← 챌린지 목록으로</div><div class="page-title">챌린지 생성</div></div>
+          <div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm">취소</button><button class="btn btn-cr btn-sm">생성하기</button></div>
+        </div>
+        <div style="max-width:600px">
+          <div class="form-sec">
+            <div class="form-sec-title">챌린지 기본 정보</div>
+            <div class="inp-label">챌린지 이름</div>
+            <input class="inp" placeholder="예) 3월 러닝 챌린지"/>
+            <div class="inp-label">카테고리</div>
+            <div class="opt-grp"><div class="opt sel">🏃 운동</div><div class="opt">📚 독서</div><div class="opt">📝 공부</div><div class="opt">🧘 생활습관</div></div>
+            <div class="inp-label">설명 <span style="color:var(--g4);font-weight:500">(선택)</span></div>
+            <textarea class="inp" style="height:68px;resize:none" placeholder="챌린지 목표와 규칙을 설명해주세요"></textarea>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">기간 및 참여 설정</div>
+            <div class="g2" style="gap:10px;margin-bottom:12px">
+              <div><div class="inp-label">시작일</div><input class="inp" type="date" value="2026-03-01" style="margin:0"/></div>
+              <div><div class="inp-label">종료일</div><input class="inp" type="date" value="2026-03-31" style="margin:0"/></div>
+            </div>
+            <div class="inp-label">최대 참여 인원 <span style="color:var(--g4);font-weight:500">(선택)</span></div>
+            <input class="inp" type="number" placeholder="제한 없음" style="width:180px"/>
+            <div class="inp-label">공개 설정</div>
+            <div class="opt-grp"><div class="opt sel">🌐 공개 — 누구나 참여 가능</div><div class="opt">🔒 비공개 — 초대코드 필요</div></div>
+          </div>
+          <div class="form-sec">
+            <div class="form-sec-title">챌린지 루틴 설정</div>
+            <div style="font-size:12px;font-weight:600;color:var(--g5);margin-bottom:12px">챌린지 참여자들이 함께 수행할 루틴이에요</div>
+            <div class="inp-label">루틴 이름</div>
+            <input class="inp" placeholder="예) 아침 러닝 30분"/>
+            <div class="inp-label">반복 유형</div>
+            <div class="opt-grp"><div class="opt">매일</div><div class="opt sel">주N회</div><div class="opt">특정 요일</div></div>
+            <div class="inp-label">주당 횟수</div>
+            <div class="opt-grp"><div class="opt">1회</div><div class="opt">2회</div><div class="opt">3회</div><div class="opt">4회</div><div class="opt sel">5회</div><div class="opt">6회</div><div class="opt">7회</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 09 챌린지 상세 ═══════ -->
+<div class="screen" id="s-challenge-detail">
+  <div class="screen-label">09 — 챌린지 상세</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/challenges/1</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div style="font-size:12px;font-weight:700;color:var(--g5);margin-bottom:10px;cursor:pointer">← 챌린지 목록으로</div>
+        <div class="page-hd">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:48px;height:48px;border-radius:var(--r-lg);background:var(--ok-tint);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">🏃</div>
+            <div>
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><div class="page-title" style="margin:0">3월 러닝 챌린지</div><span class="badge b-ok">진행중</span></div>
+              <div class="page-sub">주 5회 러닝 · 2026.03.01~03.31 · 8명 참여</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm">💬 채팅방</button>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="sec-title" style="margin-bottom:8px">오늘의 루틴</div>
+            <div class="card" style="border-color:rgba(16,185,129,0.3);background:#F0FDF4">
+              <div class="card-row" style="margin-bottom:6px">
+                <div style="display:flex;align-items:center;gap:8px"><div style="width:20px;height:20px;border-radius:50%;background:var(--ok);display:flex;align-items:center;justify-content:center;flex-shrink:0"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><polyline points="2,6 5,9 10,3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="card-title">아침 러닝 30분</div><div class="card-sub">주 5회 · 07:00 · 완료 07:23</div></div></div>
+                <button class="btn btn-ghost btn-xs">인증사진</button>
+              </div>
+              <span class="badge b-ok">1/1 완료</span>
+            </div>
+            <div class="sec-title" style="margin-top:14px;margin-bottom:8px">내 달성 현황</div>
+            <div class="card">
+              <div class="g2" style="gap:8px;margin-bottom:8px">
+                <div style="text-align:center;padding:8px;background:var(--ok-tint);border-radius:var(--r-sm)"><div style="font-size:22px;font-weight:900;color:var(--ok);letter-spacing:-1px">75%</div><div style="font-size:10px;font-weight:700;color:var(--ok-text);margin-top:2px">전체 달성률</div></div>
+                <div style="text-align:center;padding:8px;background:var(--cr-tint);border-radius:var(--r-sm)"><div style="font-size:22px;font-weight:900;color:var(--cr);letter-spacing:-1px">9</div><div style="font-size:10px;font-weight:700;color:var(--cr);margin-top:2px">완료 횟수</div></div>
+              </div>
+              <div class="prog"><div class="pf" style="width:75%;background:var(--ok)"></div></div>
+            </div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="sec-title">멤버 랭킹</div><span style="font-size:11px;font-weight:700;color:var(--cr)">실시간</span></div>
+            <div class="card" style="padding:12px">
+              <div class="rank-row"><span class="rank-num" style="color:#F59E0B">1</span><div class="av av-ok" style="width:26px;height:26px;font-size:10px">이</div><span style="font-size:12px;font-weight:700;flex:1;margin-left:6px;color:var(--g9)">이루틴</span><div class="rank-bar"><div style="height:100%;width:92%;background:var(--ok);border-radius:100px"></div></div><span class="rank-pct" style="color:var(--ok)">92%</span></div>
+              <div class="rank-row" style="background:var(--cr-tint);margin:0 -12px;padding:8px 12px"><span class="rank-num" style="color:var(--cr)">2</span><div class="av av-cr" style="width:26px;height:26px;font-size:10px">김</div><span style="font-size:12px;font-weight:800;flex:1;margin-left:6px;color:var(--cr)">김루틴 (나)</span><div style="flex:1;height:5px;background:rgba(220,53,69,0.15);border-radius:100px;overflow:hidden"><div style="height:100%;width:75%;background:var(--cr);border-radius:100px"></div></div><span class="rank-pct" style="color:var(--cr)">75%</span></div>
+              <div class="rank-row"><span class="rank-num">3</span><div class="av av-warn" style="width:26px;height:26px;font-size:10px">박</div><span style="font-size:12px;font-weight:700;flex:1;margin-left:6px;color:var(--g9)">박루틴</span><div class="rank-bar"><div style="height:100%;width:68%;background:var(--warn);border-radius:100px"></div></div><span class="rank-pct" style="color:var(--warn)">68%</span></div>
+              <div class="rank-row"><span class="rank-num" style="color:var(--g5)">4</span><div class="av av-blue" style="width:26px;height:26px;font-size:10px">최</div><span style="font-size:12px;font-weight:700;flex:1;margin-left:6px;color:var(--g9)">최루틴</span><div class="rank-bar"><div style="height:100%;width:55%;background:#60A5FA;border-radius:100px"></div></div><span class="rank-pct" style="color:var(--g5)">55%</span></div>
+              <div class="rank-row" style="border:none"><span class="rank-num" style="color:var(--g5)">5</span><div class="av av-pur" style="width:26px;height:26px;font-size:10px">정</div><span style="font-size:12px;font-weight:700;flex:1;margin-left:6px;color:var(--g9)">정루틴</span><div class="rank-bar"><div style="height:100%;width:40%;background:var(--purple);border-radius:100px"></div></div><span class="rank-pct" style="color:var(--g5)">40%</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 10 피드 ═══════ -->
+<div class="screen" id="s-feed">
+  <div class="screen-label">10 — 피드</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/feed</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd">
+          <div><div class="page-title">피드</div><div class="page-sub">챌린지 멤버들의 오늘 인증</div></div>
+          <select style="font-family:var(--font);font-size:12px;font-weight:700;padding:7px 12px;border-radius:var(--r-sm);border:1.5px solid var(--g3);background:var(--white);color:var(--g9);outline:none;cursor:pointer"><option>3월 러닝 챌린지</option><option>독서 100일 챌린지</option></select>
+        </div>
+        <div style="max-width:580px">
+          <div class="feed-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div class="av av-ok" style="width:36px;height:36px;font-size:13px;flex-shrink:0">이</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--g9)">이루틴</div><div style="font-size:11px;font-weight:600;color:var(--g5)">아침 러닝 30분 · 07:15</div></div>
+              <span class="badge b-ok">완료</span>
+            </div>
+            <div class="feed-photo">📸 인증 사진</div>
+            <div style="font-size:13px;color:var(--g9);margin-bottom:10px;line-height:1.6;font-weight:500">오늘도 새벽 러닝 완료! 🏃 바람이 차가웠지만 완주했어요. 12일 연속 달성중~</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap"><div class="rxn on">🔥 12</div><div class="rxn">💪 8</div><div class="rxn">👍 5</div><div class="rxn">+ 반응</div></div>
+          </div>
+          <div class="feed-card">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div class="av av-warn" style="width:36px;height:36px;font-size:13px;flex-shrink:0">박</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--g9)">박루틴</div><div style="font-size:11px;font-weight:600;color:var(--g5)">아침 러닝 30분 · 08:02</div></div>
+              <span class="badge b-ok">완료</span>
+            </div>
+            <div style="font-size:13px;color:var(--g9);margin-bottom:10px;line-height:1.6;font-weight:500">오늘은 텍스트로만! 공원 한 바퀴 뛰었습니다 🌳</div>
+            <div style="display:flex;gap:6px"><div class="rxn">🔥 6</div><div class="rxn on">❤️ 3</div><div class="rxn">+ 반응</div></div>
+          </div>
+          <div class="feed-card" style="border-color:rgba(220,53,69,0.25);border-width:1.5px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+              <div class="av av-cr" style="width:36px;height:36px;font-size:13px;flex-shrink:0">김</div>
+              <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--g9)">김루틴 <span style="font-size:10px;color:var(--cr);background:var(--cr-tint);padding:1px 6px;border-radius:4px">나</span></div><div style="font-size:11px;font-weight:600;color:var(--g5)">아침 러닝 30분 · 07:23</div></div>
+              <span class="badge b-ok">완료</span>
+            </div>
+            <div style="font-size:13px;color:var(--g9);margin-bottom:10px;line-height:1.6;font-weight:500">오늘도 완료! 내일도 화이팅 🙌</div>
+            <div style="display:flex;gap:6px;align-items:center"><div class="rxn on">🔥 9</div><div class="rxn">💪 4</div><div style="margin-left:auto"><button class="btn btn-ghost btn-xs">✏️ 수정</button></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 11 채팅 ═══════ -->
+<div class="screen" id="s-chat">
+  <div class="screen-label">11 — 채팅</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/chat</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">💬</div>채팅<span class="ni-badge">3</span></div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div style="flex:1;display:flex">
+        <div class="chat-wrap" style="width:100%">
+          <div class="chat-list">
+            <div class="chat-list-hd">채팅</div>
+            <div class="chat-room on">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+                <div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px">🏃</span><div class="cr-name" style="color:var(--cr)">3월 러닝 챌린지</div></div>
+                <div style="display:flex;align-items:center;gap:5px"><span style="font-size:10px;font-weight:700;color:var(--cr)">10:24</span><div style="background:var(--cr);color:white;font-size:9px;font-weight:800;padding:2px 6px;border-radius:100px">3</div></div>
+              </div>
+              <div class="cr-preview" style="color:rgba(220,53,69,0.7)">이루틴: 오늘도 완료! 🔥</div>
+            </div>
+            <div class="chat-room">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px">📚</span><div class="cr-name">독서 100일 챌린지</div></div><span style="font-size:10px;font-weight:700;color:var(--g4)">어제</span></div>
+              <div class="cr-preview">박루틴: 오늘 책 추천해요</div>
+            </div>
+            <div class="chat-room">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="display:flex;align-items:center;gap:6px"><span style="font-size:13px">💪</span><div class="cr-name">30일 홈트 챌린지</div></div><span style="font-size:10px;font-weight:700;color:var(--g4)">어제</span></div>
+              <div class="cr-preview">최루틴: 오늘 루틴 공유</div>
+            </div>
+          </div>
+          <div class="chat-main">
+            <div class="chat-hd">
+              <span style="font-size:16px">🏃</span>
+              <div style="flex:1"><div style="font-size:13px;font-weight:800;color:var(--g9)">3월 러닝 챌린지</div><div style="font-size:10px;font-weight:700;color:var(--ok)">● 멤버 8명</div></div>
+              <button class="btn btn-ghost btn-sm">멤버 보기</button>
+            </div>
+            <div class="chat-msgs">
+              <div style="text-align:center;margin-bottom:14px"><span style="font-size:10px;font-weight:700;color:var(--g4);background:var(--white);padding:4px 12px;border-radius:100px;border:1px solid var(--g3)">2026년 3월 3일</span></div>
+              <div class="msg"><div class="msg-sender">이루틴</div><div style="display:flex;align-items:flex-end;gap:7px"><div class="av av-ok" style="width:28px;height:28px;font-size:10px;flex-shrink:0">이</div><div><div class="bubble other">오늘도 새벽 러닝 완료! 다들 화이팅 🏃</div><div class="msg-time">07:16</div></div></div></div>
+              <div class="msg"><div class="msg-sender">박루틴</div><div style="display:flex;align-items:flex-end;gap:7px"><div class="av av-warn" style="width:28px;height:28px;font-size:10px;flex-shrink:0">박</div><div><div class="bubble other">저도 방금 완료! 날씨 완전 좋네요 ☀️</div><div class="msg-time">08:05</div></div></div></div>
+              <div class="msg me"><div class="bubble me">저도 완료했어요 다들 화이팅 💪</div><div class="msg-time me">07:24 ✓</div></div>
+              <div class="msg"><div class="msg-sender">최루틴</div><div style="display:flex;align-items:flex-end;gap:7px"><div class="av av-blue" style="width:28px;height:28px;font-size:10px;flex-shrink:0">최</div><div><div class="bubble other">저는 오후에 할 예정이에요. 수고들 하셨어요!</div><div class="msg-time">10:24</div></div></div></div>
+            </div>
+            <div class="chat-input-bar">
+              <button class="btn btn-ghost btn-sm" style="padding:6px 10px">📷</button>
+              <input class="chat-inp" placeholder="메시지를 입력하세요..."/>
+              <button class="btn btn-cr btn-sm">전송</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 12 알림 ═══════ -->
+<div class="screen" id="s-notif">
+  <div class="screen-label">12 — 알림</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/notifications</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅</div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">🔔</div>알림<span class="ni-badge">2</span></div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd"><div class="page-title">알림</div><button class="btn btn-ghost btn-sm">모두 읽음</button></div>
+        <div style="max-width:640px">
+          <div class="sec-title" style="margin-bottom:8px">오늘</div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--cr)"></div>
+            <div class="notif-ic" style="background:var(--cr-tint)">🔥</div>
+            <div style="flex:1"><div class="notif-text">이루틴님이 내 피드에 🔥 리액션을 남겼어요</div><div class="notif-time">10:25</div></div>
+            <button class="btn btn-ghost btn-xs">피드 보기</button>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--cr)"></div>
+            <div class="notif-ic" style="background:var(--ok-tint)">🏃</div>
+            <div style="flex:1"><div class="notif-text">아침 러닝 30분 시작할 시간이에요!</div><div class="notif-time">07:00</div></div>
+            <button class="btn btn-ghost btn-xs">루틴 보기</button>
+          </div>
+          <div class="sec-title" style="margin-top:18px;margin-bottom:8px">어제</div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--g3)"></div>
+            <div class="notif-ic" style="background:var(--g2)">🏆</div>
+            <div style="flex:1"><div class="notif-text" style="color:var(--g6)">최루틴님이 3월 러닝 챌린지에 참여했어요</div><div class="notif-time">어제 14:30</div></div>
+            <button class="btn btn-ghost btn-xs">챌린지 보기</button>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--g3)"></div>
+            <div class="notif-ic" style="background:var(--g2)">💬</div>
+            <div style="flex:1"><div class="notif-text" style="color:var(--g6)">3월 러닝 챌린지 채팅방에 새 메시지가 있어요</div><div class="notif-time">어제 22:10</div></div>
+            <button class="btn btn-ghost btn-xs">채팅 보기</button>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot" style="background:var(--g3)"></div>
+            <div class="notif-ic" style="background:var(--warn-tint)">⚠️</div>
+            <div style="flex:1"><div class="notif-text" style="color:var(--g6)">오늘 미완료 루틴 3개가 남아있어요</div><div class="notif-time">어제 22:00</div></div>
+            <button class="btn btn-ghost btn-xs">루틴 보기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 13 마이페이지 ═══════ -->
+<div class="screen" id="s-mypage">
+  <div class="screen-label">13 — 마이페이지</div>
+  <div class="frame">
+    <div class="frame-bar"><div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div><div class="url">routinely.app/mypage</div></div>
+    <div class="app">
+      <div class="sb">
+        <div class="sb-top"><svg width="22" height="22" viewBox="0 0 200 200" fill="none"><rect width="200" height="200" rx="44" fill="#DC3545"/><polyline points="46,108 82,144 154,68" stroke="white" stroke-width="22" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="152" cy="52" r="18" fill="#BF2233"/><circle cx="152" cy="52" r="11" fill="#FDEAEC"/></svg><span class="sb-logo">routine<span>ly</span></span></div>
+        <div class="sb-section">메뉴</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏠</div>홈</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">✅</div>루틴 관리</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🏆</div>챌린지</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">📰</div>피드</div>
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">💬</div>채팅</div>
+        </div>
+        <div class="sb-section">계정</div>
+        <div class="nav">
+          <div class="ni"><div class="ni-ic" style="background:var(--g2);font-size:11px">🔔</div>알림</div>
+          <div class="ni on"><div class="ni-ic" style="background:var(--cr);color:white;font-size:11px">👤</div>마이페이지</div>
+        </div>
+        <div class="sb-bottom"><div class="sb-av">김</div><div><div class="sb-uname">김루틴</div><div class="sb-streak">🔥 12일 연속</div></div></div>
+      </div>
+      <div class="main">
+        <div class="page-hd"><div class="page-title">마이페이지</div><button class="btn btn-ghost btn-sm">⚙️ 설정</button></div>
+        <div class="profile-banner">
+          <div class="profile-av">김</div>
+          <div class="profile-info">
+            <div class="profile-name">김루틴</div>
+            <div class="profile-email">kim@routinely.app · 2026.01.15 가입</div>
+            <div class="profile-stats">
+              <div class="ps-item"><div class="ps-val" style="color:var(--cr)">🔥 12</div><div class="ps-label">연속 달성</div></div>
+              <div class="ps-item"><div class="ps-val" style="color:#10B981">78%</div><div class="ps-label">이달 달성률</div></div>
+              <div class="ps-item"><div class="ps-val">3</div><div class="ps-label">참여 챌린지</div></div>
+            </div>
+          </div>
+          <button class="btn btn-sm" style="background:rgba(255,255,255,0.1);color:white;border:1.5px solid rgba(255,255,255,0.2);position:relative;z-index:1">✏️ 수정</button>
+        </div>
+        <div class="g2">
+          <div>
+            <div class="sec-title" style="margin-bottom:8px">전체 달성 통계</div>
+            <div class="g2" style="gap:8px;margin-bottom:14px">
+              <div class="stat" style="text-align:center"><div class="stat-label">총 완료</div><div class="stat-val" style="color:var(--ok);font-size:22px">247회</div></div>
+              <div class="stat" style="text-align:center"><div class="stat-label">전체 달성률</div><div class="stat-val" style="color:var(--cr);font-size:22px">73%</div></div>
+              <div class="stat" style="text-align:center"><div class="stat-label">최고 스트릭</div><div class="stat-val" style="font-size:22px">🔥 18</div></div>
+              <div class="stat" style="text-align:center"><div class="stat-label">활동 일수</div><div class="stat-val" style="font-size:22px">49일</div></div>
+            </div>
+            <div class="sec-title" style="margin-bottom:8px">카테고리별 달성률</div>
+            <div class="card" style="padding:14px">
+              <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:var(--g9)">🏃 운동</span><span style="font-size:12px;font-weight:800;color:var(--ok)">85%</span></div><div class="prog"><div class="pf" style="width:85%;background:var(--ok)"></div></div></div>
+              <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:var(--g9)">📚 독서</span><span style="font-size:12px;font-weight:800;color:var(--purple)">78%</span></div><div class="prog"><div class="pf" style="width:78%;background:var(--purple)"></div></div></div>
+              <div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:var(--g9)">📝 공부</span><span style="font-size:12px;font-weight:800;color:var(--warn)">60%</span></div><div class="prog"><div class="pf" style="width:60%;background:var(--warn)"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:12px;font-weight:700;color:var(--g9)">🧘 생활습관</span><span style="font-size:12px;font-weight:800;color:var(--cr)">55%</span></div><div class="prog"><div class="pf" style="width:55%;background:var(--cr)"></div></div></div>
+            </div>
+          </div>
+          <div>
+            <div class="sec-title" style="margin-bottom:8px">알림 설정</div>
+            <div class="card" style="padding:14px;margin-bottom:12px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--g2)"><div><div style="font-size:13px;font-weight:700;color:var(--g9)">루틴 시작 알림</div><div style="font-size:11px;font-weight:500;color:var(--g5);margin-top:2px">루틴 선호 시간에 알림 발송</div></div><div class="toggle on"><div class="toggle-th"></div></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--g2)"><div><div style="font-size:13px;font-weight:700;color:var(--g9)">마감 리마인드</div><div style="font-size:11px;font-weight:500;color:var(--g5);margin-top:2px">미완료 루틴 존재 시 알림</div></div><div class="toggle on"><div class="toggle-th"></div></div></div>
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:8px 0"><div><div style="font-size:13px;font-weight:700;color:var(--g9)">챌린지 이벤트 알림</div><div style="font-size:11px;font-weight:500;color:var(--g5);margin-top:2px">참여, 완료 등 이벤트 알림</div></div><div class="toggle off"><div class="toggle-th"></div></div></div>
+            </div>
+            <div class="sec-title" style="margin-bottom:8px">계정</div>
+            <div class="card" style="padding:10px 14px">
+              <div style="padding:10px 0;border-bottom:1px solid var(--g2);font-size:13px;font-weight:600;color:var(--g9);cursor:pointer;display:flex;align-items:center;justify-content:space-between">🔒 비밀번호 변경 <span style="color:var(--g4)">›</span></div>
+              <div style="padding:10px 0;border-bottom:1px solid var(--g2);font-size:13px;font-weight:600;color:var(--g9);cursor:pointer;display:flex;align-items:center;justify-content:space-between">🚪 로그아웃 <span style="color:var(--g4)">›</span></div>
+              <div style="padding:10px 0;font-size:13px;font-weight:600;color:var(--cr);cursor:pointer;display:flex;align-items:center;justify-content:space-between">🗑️ 회원 탈퇴 <span style="color:var(--cr);opacity:.5">›</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function sw(id, el) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('s-' + id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+</body>
+</html>
