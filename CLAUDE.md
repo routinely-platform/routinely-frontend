@@ -5,9 +5,9 @@
 | 항목 | 선택 | 비고 |
 |---|---|---|
 | Language | TypeScript | strict 모드 권장 |
-| Framework | React 18 | |
+| Framework | React 19 | |
 | Build Tool | Vite | |
-| Routing | React Router v6 | SPA 라우팅 |
+| Routing | React Router v7 | SPA 라우팅 |
 | 서버 상태 관리 | React Query (TanStack Query) | 캐싱, 로딩, 리트라이 |
 | 전역 상태 관리 | Zustand | 로그인 사용자, 토스트, UI 상태만 |
 | HTTP 클라이언트 | axios | interceptor로 토큰 자동 첨부 |
