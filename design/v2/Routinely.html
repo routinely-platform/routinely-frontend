@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Routinely · Design</title>
+<style>
+/* Routinely — Design Tokens */
+
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap');
+/* pretendard removed — CDN unavailable; Geist + system fallbacks handle Korean fine */
+
+:root {
+  /* ── Brand: Coral / Sunset ─────────────────────────── */
+  --coral-50:  #fff4ef;
+  --coral-100: #ffe5d8;
+  --coral-200: #ffcab1;
+  --coral-300: #ffa37e;
+  --coral-400: #ff7a4d;
+  --coral-500: #ff5a2b;   /* primary */
+  --coral-600: #ed3d11;
+  --coral-700: #c52d0c;
+  --coral-800: #952510;
+  --coral-900: #5e1808;
+
+  --sunset-300: #ffd166;
+  --sunset-500: #ff9248;
+  --sunset-700: #d8631e;
+
+  /* ── Neutrals ──────────────────────────────────────── */
+  --ink-0:   #ffffff;
+  --ink-25:  #fafaf7;
+  --ink-50:  #f5f4ef;
+  --ink-100: #ebe9e2;
+  --ink-200: #dcd8cf;
+  --ink-300: #b8b3a6;
+  --ink-400: #88847a;
+  --ink-500: #5d5a52;
+  --ink-600: #3d3a34;
+  --ink-700: #28251f;
+  --ink-800: #1a1814;
+  --ink-900: #0f0e0b;
+
+  /* ── Semantic ──────────────────────────────────────── */
+  --success: #16a34a;
+  --success-bg: #d6f5e1;
+  --warning: #f59e0b;
+  --warning-bg: #fff0d1;
+  --danger:  #dc2626;
+  --info:    #2563eb;
+
+  /* ── Surfaces (light) ─────────────────────────────── */
+  --bg:       var(--ink-25);
+  --surface:  var(--ink-0);
+  --surface-2: var(--ink-50);
+  --border:   var(--ink-100);
+  --border-strong: var(--ink-200);
+  --text:     var(--ink-800);
+  --text-muted: var(--ink-500);
+  --text-dim: var(--ink-400);
+
+  /* ── Type ──────────────────────────────────────────── */
+  --font-display: 'Geist', 'Pretendard', system-ui, sans-serif;
+  --font-body:    'Geist', 'Pretendard', system-ui, sans-serif;
+  --font-mono:    ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale (editorial — bold contrasts) */
+  --t-display: clamp(48px, 6vw, 88px);
+  --t-h1:   42px;
+  --t-h2:   30px;
+  --t-h3:   22px;
+  --t-h4:   17px;
+  --t-body: 15px;
+  --t-sm:   13px;
+  --t-xs:   11px;
+
+  /* ── Radius / shadow / spacing ─────────────────────── */
+  --r-xs: 6px;
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  --sh-1: 0 1px 2px rgba(20,18,12,.05), 0 1px 1px rgba(20,18,12,.04);
+  --sh-2: 0 2px 6px rgba(20,18,12,.06), 0 4px 16px rgba(20,18,12,.05);
+  --sh-3: 0 8px 24px rgba(20,18,12,.08), 0 12px 40px rgba(20,18,12,.08);
+  --sh-coral: 0 8px 24px rgba(255,90,43,.28), 0 2px 6px rgba(255,90,43,.18);
+}
+
+[data-theme="dark"] {
+  --bg:       #0f0e0b;
+  --surface:  #1a1814;
+  --surface-2: #232019;
+  --border:   #2c2922;
+  --border-strong: #3a3629;
+  --text:     #f5f4ef;
+  --text-muted: #a8a499;
+  --text-dim: #6b675c;
+  --sh-1: 0 1px 2px rgba(0,0,0,.4);
+  --sh-2: 0 2px 6px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+  --sh-3: 0 8px 24px rgba(0,0,0,.5), 0 12px 40px rgba(0,0,0,.4);
+}
+
+/* Theme: indigo */
+[data-accent="indigo"] {
+  --coral-50:  #eef0ff;
+  --coral-100: #d9defe;
+  --coral-200: #b3befd;
+  --coral-300: #8290fb;
+  --coral-400: #5d6ef5;
+  --coral-500: #4a55e8;   /* primary */
+  --coral-600: #3a3fcc;
+  --coral-700: #2c2fa3;
+  --coral-800: #1f217a;
+  --coral-900: #131451;
+  --sunset-300: #c4b5fd;
+  --sunset-500: #8b5cf6;
+  --sunset-700: #6d28d9;
+  --sh-coral: 0 8px 24px rgba(74,85,232,.28), 0 2px 6px rgba(74,85,232,.18);
+}
+
+/* Theme: teal */
+[data-accent="teal"] {
+  --coral-50:  #ecfdf5;
+  --coral-100: #d1fae5;
+  --coral-200: #a7f3d0;
+  --coral-300: #6ee7b7;
+  --coral-400: #34d399;
+  --coral-500: #10b981;
+  --coral-600: #059669;
+  --coral-700: #047857;
+  --coral-800: #065f46;
+  --coral-900: #064e3b;
+  --sunset-300: #a7f3d0;
+  --sunset-500: #14b8a6;
+  --sunset-700: #0f766e;
+  --sh-coral: 0 8px 24px rgba(16,185,129,.28), 0 2px 6px rgba(16,185,129,.18);
+}
+
+/* Type scale tweaks */
+[data-type-scale="compact"] {
+  --t-h1: 36px; --t-h2: 26px; --t-h3: 20px; --t-h4: 16px;
+  --t-body: 14px; --t-sm: 12px;
+}
+[data-type-scale="loose"] {
+  --t-h1: 52px; --t-h2: 36px; --t-h3: 26px; --t-h4: 18px;
+  --t-body: 16px; --t-sm: 14px;
+}
+
+* { box-sizing: border-box; }
+html, body {
+  margin: 0; padding: 0;
+  font-family: var(--font-body);
+  color: var(--text);
+  background: var(--bg);
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+}
+button { font-family: inherit; }
+
+/* ── Routinely component primitives ────────────────── */
+.r-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: none; cursor: pointer; font-family: inherit; font-weight: 600;
+  padding: 10px 18px; border-radius: var(--r-pill);
+  font-size: var(--t-body); letter-spacing: -0.01em;
+  transition: transform .12s, box-shadow .15s, background .15s;
+}
+.r-btn:active { transform: scale(.97); }
+.r-btn--primary { background: var(--coral-500); color: white; box-shadow: var(--sh-coral); }
+.r-btn--primary:hover { background: var(--coral-600); }
+.r-btn--secondary { background: var(--text); color: var(--surface); }
+.r-btn--ghost { background: transparent; color: var(--text); }
+.r-btn--ghost:hover { background: var(--surface-2); }
+.r-btn--lg { padding: 14px 26px; font-size: 16px; }
+.r-btn--sm { padding: 7px 14px; font-size: 13px; }
+
+.r-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-1);
+}
+
+.r-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: var(--r-pill);
+  font-size: 11px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.r-badge--waiting { background: var(--ink-100); color: var(--ink-600); }
+.r-badge--active { background: var(--coral-100); color: var(--coral-700); }
+.r-badge--ended { background: var(--ink-200); color: var(--ink-500); }
+.r-badge--success { background: var(--success-bg); color: var(--success); }
+
+.r-input {
+  width: 100%; padding: 12px 14px;
+  background: var(--surface); color: var(--text);
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-md);
+  font-family: inherit; font-size: var(--t-body);
+  transition: border-color .15s, box-shadow .15s;
+}
+.r-input:focus { outline: none; border-color: var(--coral-500); box-shadow: 0 0 0 4px var(--coral-100); }
+
+/* Streak flame animation */
+@keyframes flameWiggle {
+  0%, 100% { transform: rotate(-3deg) scale(1); }
+  50% { transform: rotate(3deg) scale(1.06); }
+}
+.r-flame { display: inline-block; animation: flameWiggle 2.4s ease-in-out infinite; transform-origin: center bottom; }
+
+/* Routine complete success burst */
+@keyframes successPop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes confettiBurst {
+  0% { transform: translate(0,0) scale(0); opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; }
+}
+
+@keyframes slideInRight {
+  0% { transform: translateX(120%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+.r-toast { animation: slideInRight .4s cubic-bezier(.2,.9,.3,1.2); }
+
+@keyframes reactionPop {
+  0% { transform: scale(0) rotate(-12deg); }
+  60% { transform: scale(1.3) rotate(8deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+</style>
+<style>
+  body { background: #f0eee9; }
+  /* TweaksPanel z-index above canvas focus overlay */
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="icons.jsx"></script>
+<script type="text/babel" src="artboards-system.jsx"></script>
+<script type="text/babel" src="artboards-home.jsx"></script>
+<script type="text/babel" src="artboards-routines.jsx"></script>
+<script type="text/babel" src="artboards-feed.jsx"></script>
+<script type="text/babel" src="artboards-mobile.jsx"></script>
+<script type="text/babel" src="artboards-proto.jsx"></script>
+<script type="text/babel" src="artboards-error.jsx"></script>
+
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accent": "coral",
+  "theme": "light",
+  "typeScale": "default"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tw, setTweak] = useTweaks(TWEAK_DEFAULTS);
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-accent', tw.accent);
+    document.documentElement.setAttribute('data-theme', tw.theme);
+    document.documentElement.setAttribute('data-type-scale', tw.typeScale);
+  }, [tw.accent, tw.theme, tw.typeScale]);
+
+  return <>
+    <DesignCanvas>
+
+      <DCSection id="brand" title="01 · Brand & Foundation" subtitle="Logo, color, type — the rules of the game">
+        <DCArtboard id="logo" label="Logo system" width={760} height={620}><LogoSystemArtboard/></DCArtboard>
+        <DCArtboard id="color" label="Color palette" width={680} height={620}><ColorSystemArtboard/></DCArtboard>
+        <DCArtboard id="type" label="Typography" width={620} height={620}><TypographyArtboard/></DCArtboard>
+        <DCArtboard id="components" label="Components" width={680} height={620}><ComponentsArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="auth" title="02 · Auth" subtitle="첫인상 — 가입과 로그인">
+        <DCArtboard id="login" label="Login" width={1200} height={760}><LoginArtboard/></DCArtboard>
+        <DCArtboard id="signup" label="Signup · 프로필 만들기" width={720} height={760}><SignupArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="dashboard" title="03 · Home Dashboard ★" subtitle="앱 진입 시 — 오늘의 루틴 + 챌린지 + 알림">
+        <DCArtboard id="home" label="Home — desktop" width={1280} height={820}><HomeArtboard/></DCArtboard>
+        <DCArtboard id="home-mobile" label="Home — mobile" width={400} height={760}><MobileHomeArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="routines" title="04 · 내 루틴" subtitle="카테고리 필터 + 생성 폼 + 상세 + 완료 모달 + 성공 화면">
+        <DCArtboard id="list" label="Routines list — 좌: 리스트 / 우: 달력+히트맵" width={1440} height={920}><RoutinesArtboard/></DCArtboard>
+        <DCArtboard id="detail" label="Routine detail ★ — 히스토리 + 완료 CTA" width={1280} height={900}><RoutineDetailArtboard/></DCArtboard>
+        <DCArtboard id="create" label="Create · 카테고리 포함" width={680} height={820}><RoutineCreateArtboard/></DCArtboard>
+        <DCArtboard id="complete-modal" label="Complete modal — 사진 + 메모 + 공유" width={680} height={900}><RoutineCompleteArtboard/></DCArtboard>
+        <DCArtboard id="success" label="Success — 인증 후 애니메이션" width={680} height={760}><RoutineSuccessArtboard/></DCArtboard>
+        <DCArtboard id="complete-mobile" label="Success · mobile" width={400} height={760}><MobileCompleteArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="challenges" title="05 · 챌린지 ★" subtitle="탐색 → 상세 → 리더보드 — 친근한 경쟁">
+        <DCArtboard id="browse" label="Browse" width={1280} height={760}><ChallengeBrowseArtboard/></DCArtboard>
+        <DCArtboard id="detail" label="Challenge detail + Leaderboard" width={1280} height={920}><ChallengeDetailArtboard/></DCArtboard>
+        <DCArtboard id="detail-mobile" label="Detail · mobile" width={400} height={760}><MobileChallengeArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="feed-chat" title="06 · 피드 & 채팅" subtitle="멤버 활동 + 실시간 챌린지 채팅방">
+        <DCArtboard id="feed" label="Feed + Reactions" width={900} height={920}><FeedArtboard/></DCArtboard>
+        <DCArtboard id="chat" label="Chat — desktop" width={1280} height={820}><ChatArtboard/></DCArtboard>
+        <DCArtboard id="chat-mobile" label="Chat · mobile" width={400} height={760}><MobileChatArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="stats-notif" title="07 · 통계 · 알림 · 프로필" subtitle="Heatmap, 차트, 알림 히스토리, 프로필">
+        <DCArtboard id="stats" label="Stats — heatmap + bars" width={1280} height={920}><StatsArtboard/></DCArtboard>
+        <DCArtboard id="notifs" label="Notifications + Toast" width={900} height={820}><NotificationsArtboard/></DCArtboard>
+        <DCArtboard id="profile" label="Profile" width={1280} height={820}><ProfileArtboard/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="proto" title="08 · Interactive Prototype ▶" subtitle="로그인 → 홈 → 챌린지 → 채팅 — 클릭해서 흘러보세요">
+        <DCArtboard id="flow" label="Click-through flow" width={1280} height={820}><ProtoFlow/></DCArtboard>
+      </DCSection>
+
+      <DCSection id="error" title="09 · Error states" subtitle="404 — 길을 잃어도 스트릭은 안전해요">
+        <DCArtboard id="404" label="404 Not Found" width={1280} height={820}><NotFoundArtboard/></DCArtboard>
+      </DCSection>
+
+    </DesignCanvas>
+
+    <TweaksPanel title="Tweaks">
+      <TweakSection title="Theme">
+        <TweakRadio label="Accent color" value={tw.accent} onChange={v => setTweak('accent', v)}
+          options={[{value: 'coral', label: 'Coral'}, {value: 'indigo', label: 'Indigo'}, {value: 'teal', label: 'Teal'}]}/>
+        <TweakRadio label="Mode" value={tw.theme} onChange={v => setTweak('theme', v)}
+          options={[{value: 'light', label: 'Light'}, {value: 'dark', label: 'Dark'}]}/>
+        <TweakRadio label="Type scale" value={tw.typeScale} onChange={v => setTweak('typeScale', v)}
+          options={[{value: 'compact', label: 'Compact'}, {value: 'default', label: 'Default'}, {value: 'loose', label: 'Loose'}]}/>
+      </TweakSection>
+    </TweaksPanel>
+  </>;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
