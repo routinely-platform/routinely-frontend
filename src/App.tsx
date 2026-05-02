@@ -2,6 +2,7 @@ import { Routes, Route } from 'react-router-dom'
 import { useInitAuth } from '@/hooks/useInitAuth'
 import ProtectedRoute from '@/components/common/ProtectedRoute'
 import PublicOnlyRoute from '@/components/common/PublicOnlyRoute'
+import AppLayout from '@/components/layout/AppLayout'
 import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
 import HomePage from '@/pages/HomePage'
@@ -19,8 +20,10 @@ export default function App() {
       </Route>
 
       <Route element={<ProtectedRoute />}>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
+        <Route element={<AppLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFoundPage />} />
