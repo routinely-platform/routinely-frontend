@@ -1,15 +1,91 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 @import "tailwindcss";
 
+/* ── Raw design tokens ─────────────────────────────────── */
+:root {
+  --coral-50:  #fff4ef;
+  --coral-100: #ffe5d8;
+  --coral-200: #ffcab1;
+  --coral-300: #ffa37e;
+  --coral-400: #ff7a4d;
+  --coral-500: #ff5a2b;
+  --coral-600: #ed3d11;
+  --coral-700: #c52d0c;
+  --sunset-300: #ffd166;
+  --sunset-500: #ff9248;
+
+  --ink-0:   #ffffff;
+  --ink-25:  #fafaf7;
+  --ink-50:  #f5f4ef;
+  --ink-100: #ebe9e2;
+  --ink-200: #dcd8cf;
+  --ink-300: #b8b3a6;
+  --ink-400: #88847a;
+  --ink-500: #5d5a52;
+  --ink-600: #3d3a34;
+  --ink-700: #28251f;
+  --ink-800: #1a1814;
+  --ink-900: #0f0e0b;
+
+  /* Semantic surfaces (light) */
+  --bg:            var(--ink-25);
+  --surface:       var(--ink-0);
+  --surface-2:     var(--ink-50);
+  --border:        var(--ink-100);
+  --border-strong: var(--ink-200);
+  --text:          var(--ink-800);
+  --text-muted:    var(--ink-500);
+  --text-dim:      var(--ink-400);
+
+  --success:    #16a34a;
+  --success-bg: #d6f5e1;
+  --warning:    #f59e0b;
+  --danger:     #dc2626;
+  --info:       #2563eb;
+
+  --sh-1: 0 1px 2px rgba(20,18,12,.05), 0 1px 1px rgba(20,18,12,.04);
+  --sh-2: 0 2px 6px rgba(20,18,12,.06), 0 4px 16px rgba(20,18,12,.05);
+  --sh-3: 0 8px 24px rgba(20,18,12,.08), 0 12px 40px rgba(20,18,12,.08);
+  --sh-coral: 0 8px 24px rgba(255,90,43,.28), 0 2px 6px rgba(255,90,43,.18);
+}
+
+[data-theme="dark"] {
+  --bg:            #0f0e0b;
+  --surface:       #1a1814;
+  --surface-2:     #232019;
+  --border:        #2c2922;
+  --border-strong: #3a3629;
+  --text:          #f5f4ef;
+  --text-muted:    #a8a499;
+  --text-dim:      #6b675c;
+}
+
+/* ── Tailwind v4 theme → utility classes ───────────────── */
 @theme {
-  --color-primary: #dc3545;
-  --color-primary-tint: #fdeaec;
-  --color-success: #10b981;
+  --color-coral-50:   #fff4ef;
+  --color-coral-100:  #ffe5d8;
+  --color-coral-200:  #ffcab1;
+  --color-coral-400:  #ff7a4d;
+  --color-coral-500:  #ff5a2b;
+  --color-coral-600:  #ed3d11;
+  --color-coral-700:  #c52d0c;
+  --color-sunset-500: #ff9248;
+
+  --color-ink-100: #ebe9e2;
+  --color-ink-200: #dcd8cf;
+  --color-ink-400: #88847a;
+  --color-ink-500: #5d5a52;
+  --color-ink-600: #3d3a34;
+  --color-ink-800: #1a1814;
+  --color-ink-900: #0f0e0b;
+
+  --color-success: #16a34a;
   --color-warning: #f59e0b;
-  --color-text-primary: #111827;
-  --color-text-secondary: #6b7280;
-  --color-bg-page: #fafafa;
-  --color-bg-card: #ffffff;
-  --color-border: #e5e7eb;
+  --color-danger:  #dc2626;
+  --color-info:    #2563eb;
+
+  --font-sans: 'Geist', 'Pretendard', system-ui, sans-serif;
 }
 
 * {
@@ -19,8 +95,9 @@
 }
 
 body {
-  background-color: #fafafa;
-  color: #111827;
-  font-family: system-ui, -apple-system, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', 'Pretendard', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
