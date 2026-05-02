@@ -33,10 +33,9 @@ export default function App() {
           <Route path="/statistics" element={<StatisticsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Route>
-
-      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
