@@ -1,7 +1,8 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios'
 
 import { useAuthStore } from '@/stores/authStore'
-import type { ApiResponse, RefreshResponse } from '@/types/api'
+import type { ApiResponse } from '@/types/api'
+import type { AuthSessionResponse } from '@/types/auth'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
@@ -64,7 +65,11 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config as RetryableConfig
 
     // refresh/logout 자체의 401은 처리하지 않음 (데드락/무한루프 방지)
-    if (originalRequest.url === '/auth/refresh' || originalRequest.url === '/auth/logout') {
+    if (
+      originalRequest.url === '/auth/refresh' ||
+      originalRequest.url === '/auth/logout' ||
+      originalRequest.url === '/auth/login'
+    ) {
       return Promise.reject(error)
     }
 
@@ -87,13 +92,13 @@ apiClient.interceptors.response.use(
     isRefreshing = true
 
     try {
-      const { data } = await apiClient.post<ApiResponse<RefreshResponse>>('/auth/refresh')
-      const newToken = data.data!.accessToken
+      const { data } = await apiClient.post<ApiResponse<AuthSessionResponse>>('/auth/refresh')
+      const session = data.data!
 
-      useAuthStore.getState().setAccessToken(newToken)
-      processQueue(null, newToken)
+      useAuthStore.getState().setAuth(session.accessToken, session.user)
+      processQueue(null, session.accessToken)
 
-      return retryRequest(originalRequest, newToken)
+      return retryRequest(originalRequest, session.accessToken)
     } catch (refreshError) {
       processQueue(refreshError)
       useAuthStore.getState().clearAuth()
