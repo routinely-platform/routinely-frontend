@@ -12,7 +12,3 @@ export interface PageResponse<T> {
   hasNext: boolean
   totalElements?: number
 }
-
-export interface RefreshResponse {
-  accessToken: string
-}
