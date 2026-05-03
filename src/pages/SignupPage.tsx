@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { postSignup } from '@/api/auth'
 import { RoutinelyWordmark } from '@/components/common/Logo'
 import AuthShell from '@/components/auth/AuthShell'
+import AuthIntro from '@/components/auth/AuthIntro'
 import PasswordField from '@/components/auth/PasswordField'
 import {
   applyValidationFieldErrors,
@@ -77,22 +78,15 @@ export default function SignupPage() {
     <AuthShell variant="centered">
       <RoutinelyWordmark size={36} />
 
-      <div style={{ marginTop: 36 }}>
-        <h1
-          style={{
-            fontSize: 44,
-            lineHeight: 1.05,
-            letterSpacing: '-0.03em',
-            fontWeight: 700,
-            marginTop: 24,
-          }}
-        >
-          시작해볼까요?
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: 15, marginTop: 8 }}>
-          Routinely에서 꾸준한 루틴을 만들어보세요.
-        </p>
-      </div>
+      <AuthIntro
+        title="시작해볼까요?"
+        description="Routinely에서 꾸준한 루틴을 만들어보세요."
+        containerMarginTop={36}
+        titleMarginTop={24}
+        titleFontSize={44}
+        titleLetterSpacing="-0.03em"
+        descriptionMarginTop={8}
+      />
 
       <form
         onSubmit={handleSubmit(onSubmit)}

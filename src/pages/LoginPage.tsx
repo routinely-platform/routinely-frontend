@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore'
 import { postLogin } from '@/api/auth'
 import { RoutinelyWordmark } from '@/components/common/Logo'
 import AuthShell from '@/components/auth/AuthShell'
+import AuthIntro from '@/components/auth/AuthIntro'
 import PasswordField from '@/components/auth/PasswordField'
 import {
   applyValidationFieldErrors,
@@ -81,35 +82,22 @@ export default function LoginPage() {
     <AuthShell variant="split">
       <RoutinelyWordmark size={36} />
 
-      <div style={{ marginTop: 60 }}>
-        <div
-          style={{
-            fontSize: 11,
-            letterSpacing: '.14em',
-            textTransform: 'uppercase',
-            fontWeight: 700,
-            color: 'var(--coral-600)',
-          }}
-        >
-          WELCOME BACK
-        </div>
-        <h1
-          style={{
-            fontSize: 52,
-            lineHeight: 1.05,
-            letterSpacing: '-0.035em',
-            fontWeight: 700,
-            marginTop: 12,
-          }}
-        >
-          오늘도
-          <br />
-          시작해볼까요?
-        </h1>
-        <p style={{ color: 'var(--text-muted)', marginTop: 14, fontSize: 15 }}>
-          21일째 함께하는 친구들이 기다리고 있어요.
-        </p>
-      </div>
+      <AuthIntro
+        eyebrow="WELCOME BACK"
+        title={
+          <>
+            오늘도
+            <br />
+            시작해볼까요?
+          </>
+        }
+        description="21일째 함께하는 친구들이 기다리고 있어요."
+        containerMarginTop={60}
+        titleMarginTop={12}
+        titleFontSize={52}
+        titleLetterSpacing="-0.035em"
+        descriptionMarginTop={14}
+      />
 
       <form onSubmit={handleSubmit(onSubmit)} className={styles.form} style={{ marginTop: 36 }}>
         <div className={styles.field}>
