@@ -2,13 +2,16 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import { postLogin } from '@/api/auth'
 import { RoutinelyWordmark } from '@/components/common/Logo'
 import AuthShell from '@/components/auth/AuthShell'
 import PasswordField from '@/components/auth/PasswordField'
-import type { ApiResponse } from '@/types/api'
+import {
+  applyValidationFieldErrors,
+  getApiErrorPayload,
+  type ValidationFieldErrors,
+} from '@/components/auth/authFormErrors'
 import styles from '@/components/auth/authForm.module.css'
 
 const schema = z.object({
@@ -17,7 +20,6 @@ const schema = z.object({
 })
 
 type FormValues = z.infer<typeof schema>
-type ValidationFieldErrors = Record<string, string>
 
 const DEFAULT_SERVER_ERROR_MESSAGE =
   '일시적인 서버 문제로 요청을 처리할 수 없습니다. 잠시 후 다시 시도해주세요.'
@@ -39,20 +41,19 @@ export default function LoginPage() {
       setAuth(result.accessToken, result.user)
       navigate('/', { replace: true })
     } catch (err) {
-      if (!axios.isAxiosError<ApiResponse<ValidationFieldErrors>>(err)) {
+      const apiError = getApiErrorPayload<ValidationFieldErrors>(err)
+
+      if (!apiError) {
         const message = err instanceof Error ? err.message : DEFAULT_SERVER_ERROR_MESSAGE
         setError('root', { message })
         return
       }
 
-      const errorCode = err.response?.data?.errorCode
-      const message = err.response?.data?.message
+      const { errorCode, message } = apiError
 
       if (errorCode === 'VALIDATION_FAILED') {
-        const fieldErrors = err.response?.data?.data ?? {}
-        Object.entries(fieldErrors).forEach(([field, fieldMessage]) => {
-          setError(field as keyof FormValues, { message: fieldMessage })
-        })
+        const fieldErrors = apiError.data ?? {}
+        applyValidationFieldErrors(setError, fieldErrors)
 
         if (Object.keys(fieldErrors).length === 0) {
           setError('root', { message: message ?? '입력값을 다시 확인해주세요.' })

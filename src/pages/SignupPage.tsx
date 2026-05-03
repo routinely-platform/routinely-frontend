@@ -2,12 +2,15 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
 import { postSignup } from '@/api/auth'
 import { RoutinelyWordmark } from '@/components/common/Logo'
 import AuthShell from '@/components/auth/AuthShell'
 import PasswordField from '@/components/auth/PasswordField'
-import type { ApiResponse } from '@/types/api'
+import {
+  applyValidationFieldErrors,
+  getApiErrorPayload,
+  type ValidationFieldErrors,
+} from '@/components/auth/authFormErrors'
 import styles from '@/components/auth/authForm.module.css'
 
 const schema = z.object({
@@ -25,8 +28,6 @@ const schema = z.object({
 
 type FormValues = z.infer<typeof schema>
 
-type ValidationFieldErrors = Record<string, string>
-
 export default function SignupPage() {
   const navigate = useNavigate()
 
@@ -42,16 +43,19 @@ export default function SignupPage() {
       await postSignup(data)
       navigate('/login')
     } catch (err) {
-      if (!axios.isAxiosError<ApiResponse<ValidationFieldErrors>>(err)) return
+      const apiError = getApiErrorPayload<ValidationFieldErrors>(err)
 
-      const errorCode = err.response?.data?.errorCode
-      const message = err.response?.data?.message ?? '회원가입에 실패했습니다.'
+      if (!apiError) {
+        setError('root', { message: '회원가입에 실패했습니다.' })
+        return
+      }
+
+      const { errorCode } = apiError
+      const message = apiError.message ?? '회원가입에 실패했습니다.'
 
       if (errorCode === 'VALIDATION_FAILED') {
-        const fieldErrors = err.response?.data?.data ?? {}
-        Object.entries(fieldErrors).forEach(([field, msg]) => {
-          setError(field as keyof FormValues, { message: msg })
-        })
+        const fieldErrors = apiError.data ?? {}
+        applyValidationFieldErrors(setError, fieldErrors)
         return
       }
 
