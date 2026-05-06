@@ -19,3 +19,7 @@ export async function postLogin(data: LoginRequest): Promise<LoginResponse> {
   const res = await apiClient.post<ApiResponse<LoginResponse>>('/auth/login', data)
   return unwrapApiResponse(res.data, '로그인에 실패했습니다.')
 }
+
+export async function postLogout(): Promise<void> {
+  await apiClient.post<ApiResponse<null>>('/auth/logout')
+}

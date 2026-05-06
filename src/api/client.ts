@@ -3,6 +3,7 @@ import axios, { type InternalAxiosRequestConfig } from 'axios'
 import { useAuthStore } from '@/stores/authStore'
 import type { ApiResponse } from '@/types/api'
 import type { AuthSessionResponse } from '@/types/auth'
+import { clearAuthSessionAndRedirect } from '@/utils/authSession'
 
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL
 
@@ -75,8 +76,7 @@ apiClient.interceptors.response.use(
 
     // 재시도한 요청도 401이면 바로 로그아웃
     if (originalRequest._retry) {
-      useAuthStore.getState().clearAuth()
-      window.location.href = '/login'
+      clearAuthSessionAndRedirect()
       return Promise.reject(error)
     }
 
@@ -101,7 +101,6 @@ apiClient.interceptors.response.use(
       return retryRequest(originalRequest, session.accessToken)
     } catch (refreshError) {
       processQueue(refreshError)
-      useAuthStore.getState().clearAuth()
 
       try {
         await apiClient.post('/auth/logout')
@@ -109,7 +108,7 @@ apiClient.interceptors.response.use(
         // best-effort: 로그아웃 API 실패해도 클라이언트는 로그아웃 처리
       }
 
-      window.location.href = '/login'
+      clearAuthSessionAndRedirect()
       return Promise.reject(refreshError)
     } finally {
       isRefreshing = false
