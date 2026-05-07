@@ -1,0 +1,280 @@
+.page {
+  position: relative;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 40px 60px;
+  background: var(--bg);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  font-family: 'Geist', sans-serif;
+  font-weight: 800;
+  font-size: clamp(280px, 38vw, 520px);
+  letter-spacing: -0.06em;
+  line-height: 0.85;
+  color: transparent;
+  -webkit-text-stroke: 2px var(--coral-100);
+}
+
+.content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 1.15fr 1fr;
+  align-items: center;
+  gap: 60px;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── Left: copy ─────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--coral-100);
+  color: var(--coral-700);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.badgeDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--coral-500);
+  flex-shrink: 0;
+}
+
+.heading {
+  font-size: clamp(48px, 7vw, 88px);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 0.95;
+  margin-top: 20px;
+  white-space: nowrap;
+}
+
+.headingAccent {
+  color: var(--coral-500);
+}
+
+.sub {
+  font-size: 18px;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.55;
+  margin-top: 24px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.btnPrimary {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 12px;
+  background: var(--coral-500);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 200ms ease;
+}
+
+.btnPrimary:hover {
+  background: var(--coral-600);
+}
+
+.btnGhost {
+  display: inline-flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 24px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  border: 1.5px solid var(--border-strong);
+  cursor: pointer;
+  transition: background-color 200ms ease;
+}
+
+.btnGhost:hover {
+  background: var(--surface-2);
+}
+
+
+/* ── Right: calendar card ───────────────────────── */
+
+.visual {
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  padding: 28px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--sh-3);
+  transform: rotate(-2deg);
+  max-width: 380px;
+  width: 100%;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardEyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-dim);
+}
+
+.cardTitle {
+  font-size: 22px;
+  font-weight: 700;
+  margin-top: 2px;
+}
+
+.flame {
+  font-size: 28px;
+}
+
+.calendar {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.calDay {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.calDayLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.calCell {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geist', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.calCellDone {
+  background: var(--coral-500);
+  color: white;
+}
+
+.calCellMiss {
+  background: transparent;
+  color: var(--coral-500);
+  border: 2px dashed var(--coral-500);
+}
+
+.calCellToday {
+  background: var(--ink-800);
+  color: white;
+}
+
+.calCellFuture {
+  background: var(--surface-2);
+  color: var(--text-dim);
+}
+
+.cardNote {
+  margin-top: 18px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  border: 1px dashed var(--border-strong);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cardNoteIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--coral-100);
+  color: var(--coral-700);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cardNoteText {
+  flex: 1;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.cardNoteStrong {
+  color: var(--text);
+}
+
+/* ── Responsive ─────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .page {
+    padding: 40px 24px;
+    align-items: flex-start;
+  }
+
+  .content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .visual {
+    display: none;
+  }
+
+  .backdrop {
+    font-size: clamp(160px, 50vw, 280px);
+  }
+}
