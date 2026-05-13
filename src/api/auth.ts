@@ -1,14 +1,7 @@
 import { apiClient } from './client'
+import { unwrapApiResponse } from './response'
 import type { ApiResponse } from '@/types/api'
 import type { LoginRequest, LoginResponse, SignupRequest, SignupResponse } from '@/types/auth'
-
-function unwrapApiResponse<T>(response: ApiResponse<T>, fallbackMessage: string): T {
-  if (response.success && response.data) {
-    return response.data
-  }
-
-  throw new Error(response.message || fallbackMessage)
-}
 
 export async function postSignup(data: SignupRequest): Promise<SignupResponse> {
   const res = await apiClient.post<ApiResponse<SignupResponse>>('/auth/signup', data)
