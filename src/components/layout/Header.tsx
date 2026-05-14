@@ -232,26 +232,38 @@ export default function Header() {
 
           {isProfileMenuOpen && (
             <div className={styles.profileMenu} role="menu" aria-label="프로필 메뉴">
-              <Link
-                to="/profile"
-                role="menuitem"
-                className={styles.profileMenuItem}
-                onClick={handleMenuClose}
-              >
-                <ProfileMenuIcon name="user" />
-                <span>마이페이지</span>
-              </Link>
+              <div className={styles.profileMenuHeader}>
+                <span className={styles.profileMenuHeaderAvatar}>{initial}</span>
+                <div className={styles.profileMenuHeaderInfo}>
+                  <div className={styles.profileMenuHeaderName}>{user?.nickname}</div>
+                  <div className={styles.profileMenuHeaderEmail}>{user?.email}</div>
+                </div>
+              </div>
 
-              <button
-                type="button"
-                role="menuitem"
-                className={cn(styles.profileMenuItem, styles.profileMenuItemDanger)}
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-              >
-                <ProfileMenuIcon name="logout" />
-                <span>{isLoggingOut ? '로그아웃 중...' : '로그아웃'}</span>
-              </button>
+              <div className={styles.profileMenuItems}>
+                <Link
+                  to="/profile"
+                  role="menuitem"
+                  className={styles.profileMenuItem}
+                  onClick={handleMenuClose}
+                >
+                  <ProfileMenuIcon name="user" />
+                  <span>마이페이지</span>
+                </Link>
+
+                <div className={styles.profileMenuDivider} role="separator" />
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  className={cn(styles.profileMenuItem, styles.profileMenuItemDanger)}
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                >
+                  <ProfileMenuIcon name="logout" />
+                  <span>{isLoggingOut ? '로그아웃 중...' : '로그아웃'}</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

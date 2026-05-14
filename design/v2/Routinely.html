@@ -257,6 +257,7 @@ button { font-family: inherit; }
 <script type="text/babel" src="artboards-mobile.jsx"></script>
 <script type="text/babel" src="artboards-proto.jsx"></script>
 <script type="text/babel" src="artboards-error.jsx"></script>
+<script type="text/babel" src="artboards-mypage.jsx"></script>
 
 <script type="text/babel">
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
@@ -314,10 +315,12 @@ function App() {
         <DCArtboard id="chat-mobile" label="Chat · mobile" width={400} height={760}><MobileChatArtboard/></DCArtboard>
       </DCSection>
 
-      <DCSection id="stats-notif" title="07 · 통계 · 알림 · 프로필" subtitle="Heatmap, 차트, 알림 히스토리, 프로필">
+      <DCSection id="stats-notif" title="07 · 통계 · 알림 · 프로필" subtitle="Heatmap, 차트, 알림 히스토리, 마이페이지">
         <DCArtboard id="stats" label="Stats — heatmap + bars" width={1280} height={920}><StatsArtboard/></DCArtboard>
         <DCArtboard id="notifs" label="Notifications + Toast" width={900} height={820}><NotificationsArtboard/></DCArtboard>
-        <DCArtboard id="profile" label="Profile" width={1280} height={820}><ProfileArtboard/></DCArtboard>
+        <DCArtboard id="mypage" label="My Page · MVP" width={1280} height={820}><MyPageMvpArtboard/></DCArtboard>
+        <DCArtboard id="mypage-edit" label="My Page · 프로필 수정 모달" width={1280} height={820}><EditProfileModalArtboard/></DCArtboard>
+        <DCArtboard id="header-dropdown" label="Header · 프로필 드롭다운 (로그아웃)" width={1280} height={820}><HeaderDropdownOpenArtboard/></DCArtboard>
       </DCSection>
 
       <DCSection id="proto" title="08 · Interactive Prototype ▶" subtitle="로그인 → 홈 → 챌린지 → 채팅 — 클릭해서 흘러보세요">

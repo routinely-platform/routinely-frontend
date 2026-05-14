@@ -1,0 +1,245 @@
+.page {
+  flex: 1;
+  overflow: auto;
+  padding: 40px 0;
+}
+
+.loadingWrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+}
+
+.errorText {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--coral-500);
+  animation: spin 0.7s linear infinite;
+}
+
+.inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 32px;
+}
+
+.pageHeading {
+  margin-bottom: 28px;
+}
+
+.successBanner {
+  margin-bottom: 16px;
+  padding: 12px 14px;
+  border: 1px solid rgba(22, 163, 74, 0.18);
+  border-radius: 12px;
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pageTitle {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin: 0;
+  color: var(--text);
+}
+
+.pageSubtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ── Profile card ── */
+.card {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--sh-2);
+  padding: 32px;
+}
+
+.halo {
+  position: absolute;
+  top: -160px;
+  right: -120px;
+  width: 380px;
+  height: 380px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--coral-100), transparent 70%);
+  pointer-events: none;
+}
+
+.cardBody {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff8a65, #ff5a2b);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 48px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 8px 24px -10px rgba(255, 90, 43, 0.45);
+}
+
+.info {
+  flex: 1;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.nickname {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+  color: var(--text);
+}
+
+.daysBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  background: var(--coral-100);
+  border: 1px solid var(--coral-200);
+  color: var(--coral-700);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.daysNum {
+  font-family: 'Geist', sans-serif;
+}
+
+.bio {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 10px 0 0;
+  line-height: 1.6;
+}
+
+.bioEmpty {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin: 10px 0 0;
+  font-style: italic;
+}
+
+.metaList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.metaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.metaIcon {
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.editBtn {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 13px;
+  font-family: inherit;
+  padding: 10px 18px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+}
+
+.editBtn:hover {
+  background: var(--surface-2);
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 24px 0;
+  }
+
+  .inner {
+    padding: 0 16px;
+  }
+
+  .pageTitle {
+    font-size: 24px;
+  }
+
+  .card {
+    padding: 20px;
+  }
+
+  .cardBody {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .avatar {
+    width: 80px;
+    height: 80px;
+    font-size: 34px;
+  }
+
+  .nickname {
+    font-size: 22px;
+  }
+
+  .editBtn {
+    align-self: stretch;
+    text-align: center;
+  }
+}
