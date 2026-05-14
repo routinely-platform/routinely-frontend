@@ -20,6 +20,7 @@ export function useUpdateProfile() {
     mutationFn: (data: UpdateProfileRequest) => updateProfile(data),
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(MY_PROFILE_QUERY_KEY, updatedProfile)
+      void queryClient.invalidateQueries({ queryKey: MY_PROFILE_QUERY_KEY })
 
       const { user, setUser } = useAuthStore.getState()
       if (user) {
