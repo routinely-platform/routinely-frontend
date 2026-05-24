@@ -628,63 +628,436 @@ const ChallengeDetailArtboard = () => (
 );
 
 // ─── Challenge Browse ──────────────────────────
-const ChallengeBrowseArtboard = () => (
-  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
-    <AppHeader active="challenges" />
-    <div style={{ flex: 1, overflow: 'auto', padding: '32px 36px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700 }}>EXPLORE</div>
-          <h1 style={{ fontSize: 44, fontWeight: 700, letterSpacing: '-0.03em', margin: '4px 0 0' }}>같이 할 사람,<br/>찾고 있어요?</h1>
+// Two tabs: 내 챌린지 / 공개 챌린지.
+// Implemented as a parameterized component so each artboard renders one tab.
+
+const ChallengeBrowseHeader = ({ tab, setTab, query }) => (
+  <>
+    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 18 }}>
+      <div>
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '.1em', fontWeight: 700 }}>CHALLENGES</div>
+        <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: '-0.03em', margin: '4px 0 0', lineHeight: 1.05 }}>같이 만들어가는 꾸준함</h1>
+      </div>
+      <button className="r-btn r-btn--primary"><Icon name="plus" size={16}/>챌린지 만들기</button>
+    </div>
+
+    {/* Tabs */}
+    <div style={{ display: 'flex', gap: 24, borderBottom: '1px solid var(--border)', marginBottom: 18 }}>
+      {[
+        { id: 'mine', label: '내 챌린지', count: 5 },
+        { id: 'public', label: '공개 챌린지', count: 142 },
+      ].map(t => {
+        const on = tab === t.id;
+        return (
+          <button key={t.id} style={{
+            background: 'transparent', border: 'none', cursor: 'pointer',
+            padding: '12px 2px', display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontSize: 15, fontWeight: on ? 700 : 500,
+            color: on ? 'var(--coral-600)' : 'var(--text-muted)',
+            borderBottom: on ? '2.5px solid var(--coral-500)' : '2.5px solid transparent',
+            marginBottom: -1,
+          }}>
+            <span>{t.label}</span>
+            <span style={{
+              fontSize: 11, fontFamily: 'Geist', fontWeight: 700,
+              padding: '2px 7px', borderRadius: 999,
+              background: on ? 'var(--coral-100)' : 'var(--surface-2)',
+              color: on ? 'var(--coral-700)' : 'var(--text-muted)',
+            }}>{t.count}</span>
+          </button>
+        );
+      })}
+    </div>
+
+  </>
+);
+
+const CHIP = (on, color = 'var(--text)') => ({
+  display: 'inline-flex', alignItems: 'center', gap: 6,
+  padding: '7px 13px', borderRadius: 999,
+  border: on ? 'none' : '1.5px solid var(--border-strong)',
+  background: on ? color : 'var(--surface)',
+  color: on ? 'white' : 'var(--text)',
+  fontFamily: 'inherit', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+});
+
+const CATEGORY_CHIPS = [
+  { v: 'all', emoji: '✨', label: '전체' },
+  { v: 'fitness', emoji: '💪', label: '운동' },
+  { v: 'study', emoji: '📚', label: '공부' },
+  { v: 'mind', emoji: '🧘', label: '마음챙김' },
+  { v: 'life', emoji: '🌱', label: '생활' },
+  { v: 'hobby', emoji: '🎨', label: '취미' },
+  { v: 'health', emoji: '💊', label: '건강' },
+];
+
+// Status badge for cards
+const StatusBadge = ({ status }) => {
+  const map = {
+    WAITING: { bg: 'var(--surface-2)', fg: 'var(--text-muted)', dot: 'var(--text-dim)', label: '대기' },
+    ACTIVE:  { bg: 'var(--coral-100)', fg: 'var(--coral-700)', dot: 'var(--coral-500)', label: '진행중' },
+    ENDED:   { bg: 'var(--ink-100)', fg: 'var(--ink-600)', dot: 'var(--ink-400)', label: '종료' },
+  }[status];
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 9px', borderRadius: 999,
+      background: map.bg, color: map.fg,
+      fontSize: 10, fontWeight: 700, letterSpacing: '.04em',
+    }}>
+      <span style={{ width: 5, height: 5, borderRadius: '50%', background: map.dot }}/>
+      {map.label}
+    </span>
+  );
+};
+
+const CategoryBadge = ({ code }) => {
+  const c = CATEGORY_CHIPS.find(x => x.v === code) || CATEGORY_CHIPS[0];
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 6, background: 'var(--surface-2)', color: 'var(--text-muted)' }}>
+      {c.emoji} {c.label}
+    </span>
+  );
+};
+
+const RoleBadge = ({ role }) => (
+  <span style={{
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    padding: '3px 8px', borderRadius: 6,
+    background: role === 'OWNER' ? 'var(--ink-800)' : 'transparent',
+    color: role === 'OWNER' ? 'white' : 'var(--text-muted)',
+    border: role === 'OWNER' ? 'none' : '1px solid var(--border-strong)',
+    fontSize: 10, fontWeight: 700, letterSpacing: '.04em',
+  }}>
+    {role === 'OWNER' ? '👑 방장' : '멤버'}
+  </span>
+);
+
+// ─── MyChallenges card ─────────────────────────────
+const MyChallengeCard = ({ c }) => {
+  const full = c.current >= c.max;
+  return (
+    <div className="r-card" style={{ padding: 18, display: 'flex', flexDirection: 'column', gap: 12, cursor: 'pointer' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
+            background: c.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 22,
+          }}>{c.emoji}</div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.01em', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</div>
+            <div style={{ display: 'flex', gap: 5, marginTop: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+              <StatusBadge status={c.status}/>
+              <CategoryBadge code={c.category}/>
+              <RoleBadge role={c.role}/>
+            </div>
+          </div>
         </div>
-        <button className="r-btn r-btn--primary"><Icon name="plus" size={16}/>챌린지 만들기</button>
       </div>
 
-      <div style={{ display: 'flex', gap: 10, marginBottom: 24, alignItems: 'center' }}>
-        <div className="r-input" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }}>
-          <Icon name="search" size={16} color="var(--text-muted)"/>
-          <input style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontFamily: 'inherit', fontSize: 14 }} placeholder="러닝, 독서, 명상..." defaultValue=""/>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, borderTop: '1px solid var(--border)' }}>
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', fontFamily: 'Geist' }}>
+          {c.startedAt} ~ {c.endedAt}
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {['전체', '🔥 인기', '🏃 운동', '📚 독서', '🧘 마음', '🌅 모닝'].map((t, i) => (
-            <span key={t} style={{ padding: '8px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600, background: i === 0 ? 'var(--text)' : 'var(--surface)', color: i === 0 ? 'var(--surface)' : 'var(--text)', border: i === 0 ? 'none' : '1px solid var(--border-strong)', cursor: 'pointer' }}>{t}</span>
+        <div style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Geist', color: 'var(--text)' }}>
+          {c.current}<span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>/{c.max}명</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── PublicChallenges card ─────────────────────────
+const PublicChallengeCard = ({ c }) => {
+  const full = c.current >= c.max;
+  return (
+    <div className="r-card" style={{ overflow: 'hidden', padding: 0, display: 'flex', flexDirection: 'column', cursor: 'pointer' }}>
+      <div style={{ background: c.bg, padding: '14px 18px 38px', position: 'relative', minHeight: 80 }}>
+        <div style={{ position: 'absolute', top: -40, right: -40, width: 140, height: 140, borderRadius: '50%', border: '1.5px solid rgba(255,255,255,.18)' }}/>
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+          <StatusBadge status={c.status}/>
+          <span style={{ fontSize: 32 }}>{c.emoji}</span>
+        </div>
+      </div>
+
+      <div style={{ padding: '0 18px 18px', marginTop: -22, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+          <CategoryBadge code={c.category}/>
+        </div>
+        <div style={{ fontSize: 17, fontWeight: 800, marginTop: 6, letterSpacing: '-0.01em' }}>{c.title}</div>
+        <div style={{
+          fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.45, marginTop: 6,
+          display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden',
+          minHeight: 34,
+        }}>{c.description}</div>
+
+        <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 10, fontFamily: 'Geist' }}>
+          {c.startedAt} ~ {c.endedAt}
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
+          <div style={{
+            fontSize: 13, fontWeight: 700, fontFamily: 'Geist',
+            color: full ? 'var(--coral-600)' : 'var(--text)',
+          }}>
+            {full && <span style={{ fontSize: 10, fontWeight: 800, padding: '2px 7px', borderRadius: 5, background: 'var(--coral-100)', color: 'var(--coral-700)', marginRight: 6, letterSpacing: '.04em' }}>마감</span>}
+            {c.current}<span style={{ color: 'var(--text-dim)', fontWeight: 500 }}>/{c.max}명</span>
+          </div>
+          <button className="r-btn r-btn--sm" disabled={full} style={full
+            ? { background: 'var(--surface-2)', color: 'var(--text-dim)', cursor: 'not-allowed' }
+            : { background: 'var(--coral-500)', color: 'white', boxShadow: 'var(--sh-coral)' }}>
+            {full ? '정원 마감' : '참여하기'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Pagination ───────────────────────────────────
+const Pagination = ({ current, total, perPage, totalItems }) => {
+  // Build page-number list with ellipsis: 1 … (c-1) c (c+1) … total
+  const pages = [];
+  const push = (p) => pages.push(p);
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) push(i);
+  } else {
+    push(1);
+    if (current > 3) push('…L');
+    const start = Math.max(2, current - 1);
+    const end = Math.min(total - 1, current + 1);
+    for (let i = start; i <= end; i++) push(i);
+    if (current < total - 2) push('…R');
+    push(total);
+  }
+  const from = (current - 1) * perPage + 1;
+  const to = Math.min(current * perPage, totalItems);
+
+  const btn = (active, disabled) => ({
+    minWidth: 34, height: 34, padding: '0 10px', borderRadius: 8,
+    border: active ? 'none' : '1px solid var(--border-strong)',
+    background: active ? 'var(--coral-500)' : 'var(--surface)',
+    color: active ? 'white' : (disabled ? 'var(--text-dim)' : 'var(--text)'),
+    fontFamily: 'Geist', fontSize: 13, fontWeight: active ? 800 : 600,
+    cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.5 : 1,
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 4,
+  });
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+      gap: 14, marginTop: 28, padding: '18px 4px 4px',
+      borderTop: '1px solid var(--border)',
+      flexWrap: 'wrap',
+    }}>
+      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+        총 <span style={{ fontFamily: 'Geist', fontWeight: 700, color: 'var(--text)' }}>{totalItems}</span>개 ·
+        <span style={{ fontFamily: 'Geist', fontWeight: 600, color: 'var(--text)', marginLeft: 4 }}>{from}–{to}</span> 표시 중
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+        <button style={btn(false, current === 1)}>‹ 이전</button>
+        {pages.map((p, i) => (
+          typeof p === 'number'
+            ? <button key={i} style={btn(p === current, false)}>{p}</button>
+            : <span key={i} style={{ minWidth: 22, textAlign: 'center', color: 'var(--text-dim)', fontFamily: 'Geist', fontSize: 13 }}>…</span>
+        ))}
+        <button style={btn(false, current === total)}>다음 ›</button>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.06em', textTransform: 'uppercase' }}>페이지당</span>
+        <div style={{ display: 'flex', gap: 0, background: 'var(--surface)', border: '1px solid var(--border-strong)', borderRadius: 8, overflow: 'hidden' }}>
+          {[12, 24, 48].map(n => (
+            <span key={n} style={{
+              padding: '7px 10px', fontSize: 12, fontWeight: 700, fontFamily: 'Geist',
+              cursor: 'pointer',
+              background: n === perPage ? 'var(--text)' : 'transparent',
+              color: n === perPage ? 'var(--surface)' : 'var(--text-muted)',
+            }}>{n}</span>
           ))}
         </div>
       </div>
+    </div>
+  );
+};
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
-        {[
-          { name: '21일 아침 러닝', emoji: '🏃', members: 12, days: 21, host: '민지', bg: 'linear-gradient(135deg, var(--coral-500), var(--sunset-500))', joined: true },
-          { name: '하루 한 권 독서', emoji: '📚', members: 8, days: 30, host: '준호', bg: 'linear-gradient(135deg, #118AB2, #06D6A0)' },
-          { name: '저녁 9시 명상', emoji: '🧘', members: 24, days: 14, host: '다은', bg: 'linear-gradient(135deg, #9D4EDD, #5D4EDD)' },
-          { name: '물 2L 마시기', emoji: '💧', members: 16, days: 30, host: '시우', bg: 'linear-gradient(135deg, #06D6A0, #06A67D)' },
-          { name: '주 3회 헬스장', emoji: '💪', members: 6, days: 28, host: '하준', bg: 'linear-gradient(135deg, #EF476F, #C9184A)' },
-          { name: '아침 6시 기상', emoji: '🌅', members: 20, days: 21, host: '서윤', bg: 'linear-gradient(135deg, #FFD166, var(--sunset-500))' },
-        ].map((c, i) => (
-          <div key={i} className="r-card" style={{ overflow: 'hidden', padding: 0 }}>
-            <div style={{ background: c.bg, padding: '20px 18px 60px', position: 'relative', minHeight: 100 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <span className="r-badge" style={{ background: 'rgba(255,255,255,.25)', color: 'white' }}>{c.joined ? '● JOINED' : '● ACTIVE'}</span>
-                <span style={{ fontSize: 38 }}>{c.emoji}</span>
-              </div>
-            </div>
-            <div style={{ padding: '0 18px 18px', marginTop: -32 }}>
-              <AvatarStack items={Array.from({length: 4}).map((_,j) => ({ name: ['지','민','준','다'][j], color: ['#FF8A65','#FFD166','#06D6A0','#9D4EDD'][j] }))} size={32}/>
-              <div style={{ fontSize: 17, fontWeight: 700, marginTop: 12 }}>{c.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4, display: 'flex', gap: 10 }}>
-                <span><Icon name="users" size={11} style={{ verticalAlign: -1, marginRight: 3 }}/>{c.members}명</span>
-                <span><Icon name="calendar" size={11} style={{ verticalAlign: -1, marginRight: 3 }}/>{c.days}일</span>
-              </div>
-              <button className="r-btn r-btn--sm" style={{ marginTop: 14, width: '100%', background: c.joined ? 'var(--surface-2)' : 'var(--coral-500)', color: c.joined ? 'var(--text)' : 'white', boxShadow: c.joined ? 'none' : 'var(--sh-coral)' }}>
-                {c.joined ? '진행중' : '참여하기'}
-              </button>
-            </div>
+// ─── Tab 1: My Challenges ──────────────────────────
+const ChallengeBrowseArtboard = () => {
+  const myList = [
+    { title: '21일 아침 러닝', emoji: '🏃', bg: 'linear-gradient(135deg,var(--coral-500),var(--sunset-500))', category: 'fitness', status: 'ACTIVE', role: 'OWNER', startedAt: '2026.05.06', endedAt: '2026.05.27', current: 8, max: 12 },
+    { title: '하루 한 권 독서', emoji: '📚', bg: 'linear-gradient(135deg,#118AB2,#06D6A0)', category: 'study', status: 'ACTIVE', role: 'MEMBER', startedAt: '2026.05.15', endedAt: '2026.06.14', current: 6, max: 8 },
+    { title: '저녁 9시 명상', emoji: '🧘', bg: 'linear-gradient(135deg,#9D4EDD,#5D4EDD)', category: 'mind', status: 'WAITING', role: 'MEMBER', startedAt: '2026.05.25', endedAt: '2026.06.07', current: 4, max: 20 },
+    { title: '물 2L 마시기', emoji: '💧', bg: 'linear-gradient(135deg,#06D6A0,#06A67D)', category: 'health', status: 'ACTIVE', role: 'MEMBER', startedAt: '2026.05.01', endedAt: '2026.05.30', current: 16, max: 30 },
+    { title: '주 3회 헬스장', emoji: '💪', bg: 'linear-gradient(135deg,#EF476F,#C9184A)', category: 'fitness', status: 'ENDED', role: 'OWNER', startedAt: '2026.04.01', endedAt: '2026.04.28', current: 6, max: 6 },
+  ];
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <AppHeader active="challenges" />
+      <div style={{ flex: 1, overflow: 'auto', padding: '28px 36px' }}>
+        <ChallengeBrowseHeader tab="mine" query="tab=mine&category=all&status=active&sort=joinedAt"/>
+
+        {/* Filter row 1 — search + sort */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center' }}>
+          <div className="r-input" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }}>
+            <Icon name="search" size={16} color="var(--text-muted)"/>
+            <input style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontFamily: 'inherit', fontSize: 14 }} placeholder="제목으로 검색"/>
           </div>
+          <div className="r-input" style={{ width: 200, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-muted)' }}>정렬</span>
+            <span style={{ fontWeight: 600 }}>최근 참여순 ▾</span>
+          </div>
+        </div>
+
+        {/* Filter row 2 — category (single select) */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {CATEGORY_CHIPS.map((c, i) => (
+            <button key={c.v} style={CHIP(i === 0, 'var(--text)')}>
+              <span>{c.emoji}</span><span>{c.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Filter row 3 — status (single select toggle) */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 22, alignItems: 'center' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.08em', textTransform: 'uppercase', marginRight: 4 }}>상태</span>
+          {[
+            { v: 'all', label: '전체' },
+            { v: 'WAITING', label: '대기' },
+            { v: 'ACTIVE', label: '진행중', on: true },
+            { v: 'ENDED', label: '종료' },
+          ].map(s => (
+            <button key={s.v} style={CHIP(s.on, 'var(--coral-500)')}>
+              {s.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Results count */}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+          <span style={{ fontFamily: 'Geist', fontWeight: 700, color: 'var(--text)' }}>{myList.filter(c => c.status === 'ACTIVE').length}개</span>의 진행중인 챌린지
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 14 }}>
+          {myList.map((c, i) => <MyChallengeCard key={i} c={c}/>)}
+        </div>
+
+        <Pagination current={1} total={2} perPage={12} totalItems={17}/>
+      </div>
+    </div>
+  );
+};
+
+// ─── Tab 2: Public Challenges ──────────────────────
+const ChallengeBrowsePublicArtboard = () => {
+  const publicList = [
+    { title: '아침 6시 기상 21일', emoji: '🌅', bg: 'linear-gradient(135deg,#FFD166,var(--sunset-500))', category: 'life', status: 'WAITING', startedAt: '2026.05.25', endedAt: '2026.06.14', current: 18, max: 20, description: '하루를 일찍 시작하는 사람들. 6시 전에 일어나서 짧은 메모를 남겨요.' },
+    { title: '주 3회 헬스장', emoji: '💪', bg: 'linear-gradient(135deg,#EF476F,#C9184A)', category: 'fitness', status: 'WAITING', startedAt: '2026.05.27', endedAt: '2026.06.23', current: 6, max: 6, description: '벌크업이든 다이어트든 일단 가야 한다. 인증은 입구 거울샷.' },
+    { title: '저녁 9시 명상', emoji: '🧘', bg: 'linear-gradient(135deg,#9D4EDD,#5D4EDD)', category: 'mind', status: 'WAITING', startedAt: '2026.05.28', endedAt: '2026.06.10', current: 11, max: 30, description: '하루를 차분하게 마무리. 10분 명상 후 짧은 소감 메모.' },
+    { title: '하루 한 권 독서', emoji: '📚', bg: 'linear-gradient(135deg,#118AB2,#06D6A0)', category: 'study', status: 'WAITING', startedAt: '2026.05.29', endedAt: '2026.06.27', current: 4, max: 10, description: '책 한 권을 30일에 걸쳐 읽고 매일 10페이지씩 인증.' },
+    { title: '물 2L 매일', emoji: '💧', bg: 'linear-gradient(135deg,#06D6A0,#06A67D)', category: 'health', status: 'WAITING', startedAt: '2026.06.01', endedAt: '2026.06.30', current: 9, max: 25, description: '컵 사진이면 끝. 가벼운 습관부터 같이 만들어요.' },
+    { title: '21일 그림 그리기', emoji: '🎨', bg: 'linear-gradient(135deg,#F77F00,#D62828)', category: 'hobby', status: 'WAITING', startedAt: '2026.06.03', endedAt: '2026.06.23', current: 7, max: 15, description: '낙서도 좋아요. 매일 한 장씩 손으로 그려서 올려요.' },
+  ];
+
+  return (
+    <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+      <AppHeader active="challenges" />
+      <div style={{ flex: 1, overflow: 'auto', padding: '28px 36px' }}>
+        <ChallengeBrowseHeader tab="public" query="tab=public&categories=fitness,mind&sort=startingSoon"/>
+
+        {/* Filter row 1 — search + sort */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center' }}>
+          <div className="r-input" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }}>
+            <Icon name="search" size={16} color="var(--text-muted)"/>
+            <input style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontFamily: 'inherit', fontSize: 14 }} placeholder="제목으로 검색"/>
+          </div>
+          <div className="r-input" style={{ width: 200, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}>
+            <span style={{ color: 'var(--text-muted)' }}>정렬</span>
+            <span style={{ fontWeight: 600 }}>시작 임박순 ▾</span>
+          </div>
+        </div>
+
+        {/* Multi-select category */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14, alignItems: 'center' }}>
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.08em', textTransform: 'uppercase', marginRight: 4 }}>카테고리 (다중)</span>
+          {CATEGORY_CHIPS.filter(c => c.v !== 'all').map(c => {
+            const on = c.v === 'fitness' || c.v === 'mind';
+            return (
+              <button key={c.v} style={CHIP(on, 'var(--coral-500)')}>
+                {on && <Icon name="check" size={11} color="white" strokeWidth={3.5}/>}
+                <span>{c.emoji}</span><span>{c.label}</span>
+              </button>
+            );
+          })}
+          <button style={{ marginLeft: 4, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--coral-600)' }}>초기화</button>
+        </div>
+
+        {/* Results count */}
+        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 14 }}>
+          <span style={{ fontFamily: 'Geist', fontWeight: 700, color: 'var(--text)' }}>142개</span>의 모집중인 챌린지 · WAITING만 표시
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+          {publicList.map((c, i) => <PublicChallengeCard key={i} c={c}/>)}
+        </div>
+
+        <Pagination current={3} total={12} perPage={12} totalItems={142}/>
+      </div>
+    </div>
+  );
+};
+
+// ─── Empty state variant ──────────────────────────
+const ChallengeBrowseEmptyArtboard = () => (
+  <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg)' }}>
+    <AppHeader active="challenges" />
+    <div style={{ flex: 1, overflow: 'auto', padding: '28px 36px' }}>
+      <ChallengeBrowseHeader tab="mine" query="tab=mine&category=hobby&status=ended&q=피아노"/>
+
+      <div style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'center' }}>
+        <div className="r-input" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px' }}>
+          <Icon name="search" size={16} color="var(--text-muted)"/>
+          <input style={{ border: 'none', outline: 'none', background: 'transparent', flex: 1, fontFamily: 'inherit', fontSize: 14 }} defaultValue="피아노"/>
+        </div>
+        <div className="r-input" style={{ width: 200, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', cursor: 'pointer', fontSize: 13 }}>
+          <span style={{ color: 'var(--text-muted)' }}>정렬</span>
+          <span style={{ fontWeight: 600 }}>최근 참여순 ▾</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+        {CATEGORY_CHIPS.map((c) => (
+          <button key={c.v} style={CHIP(c.v === 'hobby', 'var(--text)')}>
+            <span>{c.emoji}</span><span>{c.label}</span>
+          </button>
         ))}
+      </div>
+      <div style={{ display: 'flex', gap: 6, marginBottom: 32, alignItems: 'center' }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-dim)', letterSpacing: '.08em', textTransform: 'uppercase', marginRight: 4 }}>상태</span>
+        {[
+          { v: 'all', label: '전체' }, { v: 'WAITING', label: '대기' }, { v: 'ACTIVE', label: '진행중' },
+          { v: 'ENDED', label: '종료', on: true },
+        ].map(s => (
+          <button key={s.v} style={CHIP(s.on, 'var(--coral-500)')}>{s.label}</button>
+        ))}
+      </div>
+
+      {/* Empty state */}
+      <div className="r-card" style={{ padding: '64px 32px', textAlign: 'center', background: 'var(--bg)', borderStyle: 'dashed', borderColor: 'var(--border-strong)' }}>
+        <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 16 }}>🌱</div>
+        <div style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>아직 결과가 없어요</div>
+        <div style={{ fontSize: 14, color: 'var(--text-muted)', marginTop: 8, maxWidth: 380, margin: '8px auto 0', lineHeight: 1.55 }}>
+          "<b style={{ color: 'var(--text)' }}>피아노</b>" · <b style={{ color: 'var(--text)' }}>취미</b> · <b style={{ color: 'var(--text)' }}>종료</b> 조건에 맞는 챌린지가 없어요.<br/>필터를 조금만 풀어볼까요?
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24 }}>
+          <button className="r-btn r-btn--ghost" style={{ border: '1px solid var(--border-strong)' }}>필터 초기화</button>
+          <button className="r-btn r-btn--primary"><Icon name="plus" size={14}/>새 챌린지 만들기</button>
+        </div>
       </div>
     </div>
   </div>
 );
 
 
-Object.assign(window, { RoutinesArtboard, RoutineDetailArtboard, RoutineCompleteArtboard, RoutineSuccessArtboard, RoutineCreateArtboard, ChallengeDetailArtboard, ChallengeBrowseArtboard });
+Object.assign(window, { RoutinesArtboard, RoutineDetailArtboard, RoutineCompleteArtboard, RoutineSuccessArtboard, RoutineCreateArtboard, ChallengeBrowseArtboard, ChallengeBrowsePublicArtboard, ChallengeBrowseEmptyArtboard });
