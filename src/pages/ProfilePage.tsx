@@ -71,7 +71,17 @@ export default function ProfilePage() {
         <div className={styles.card}>
           <div className={styles.halo} aria-hidden="true" />
           <div className={styles.cardBody}>
-            <div className={styles.avatar}>{initial}</div>
+            <div className={styles.avatar}>
+              {profile.profileImageUrl ? (
+                <img
+                  src={profile.profileImageUrl}
+                  alt={`${profile.nickname} 프로필 이미지`}
+                  className={styles.avatarImage}
+                />
+              ) : (
+                initial
+              )}
+            </div>
 
             <div className={styles.info}>
               <div className={styles.nameRow}>

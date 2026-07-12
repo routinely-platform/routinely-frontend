@@ -224,7 +224,13 @@ export default function Header() {
             className={cn(styles.profileTrigger, isProfileMenuOpen && styles.profileTriggerOpen)}
             onClick={handleProfileMenuToggle}
           >
-            <span className={styles.profileAvatar}>{initial}</span>
+            <span className={styles.profileAvatar}>
+              {user?.profileImageUrl ? (
+                <img src={user.profileImageUrl} alt="" className={styles.avatarImage} />
+              ) : (
+                initial
+              )}
+            </span>
             <span className={styles.profileMenuChevron}>
               <ProfileMenuIcon name="chevronDown" />
             </span>
@@ -233,7 +239,13 @@ export default function Header() {
           {isProfileMenuOpen && (
             <div className={styles.profileMenu} role="menu" aria-label="프로필 메뉴">
               <div className={styles.profileMenuHeader}>
-                <span className={styles.profileMenuHeaderAvatar}>{initial}</span>
+                <span className={styles.profileMenuHeaderAvatar}>
+                  {user?.profileImageUrl ? (
+                    <img src={user.profileImageUrl} alt="" className={styles.avatarImage} />
+                  ) : (
+                    initial
+                  )}
+                </span>
                 <div className={styles.profileMenuHeaderInfo}>
                   <div className={styles.profileMenuHeaderName}>{user?.nickname}</div>
                   <div className={styles.profileMenuHeaderEmail}>{user?.email}</div>
