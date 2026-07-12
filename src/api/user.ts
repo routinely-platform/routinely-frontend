@@ -38,3 +38,27 @@ export async function updateProfile(data: UpdateProfileRequest): Promise<MyProfi
   const raw = unwrapApiResponse(res.data, '프로필 수정에 실패했습니다.')
   return normalizeProfile(raw)
 }
+
+// 백엔드 #95: PUT /users/me/profile-image (multipart, field=image) → 갱신된 전체 프로필
+// apiClient 기본 헤더가 application/json 이라, 이대로 두면 axios 가 FormData 를 JSON 으로
+// 직렬화해버린다. 이를 막기 위해 요청별로 Content-Type 을 multipart/form-data 로 재정의한다.
+// (브라우저 환경에선 axios 가 전송 직전 이 헤더를 비워, 브라우저가 boundary 를 채운다.)
+export async function uploadProfileImage(file: File): Promise<MyProfile> {
+  const formData = new FormData()
+  formData.append('image', file)
+
+  const res = await apiClient.put<ApiResponse<RawMyProfileResponse>>(
+    '/users/me/profile-image',
+    formData,
+    { headers: { 'Content-Type': 'multipart/form-data' } },
+  )
+  const raw = unwrapApiResponse(res.data, '프로필 이미지 업로드에 실패했습니다.')
+  return normalizeProfile(raw)
+}
+
+// 백엔드 #95: DELETE /users/me/profile-image → 이미지가 제거된 전체 프로필
+export async function deleteProfileImage(): Promise<MyProfile> {
+  const res = await apiClient.delete<ApiResponse<RawMyProfileResponse>>('/users/me/profile-image')
+  const raw = unwrapApiResponse(res.data, '프로필 이미지 삭제에 실패했습니다.')
+  return normalizeProfile(raw)
+}
