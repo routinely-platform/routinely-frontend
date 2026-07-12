@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   applyValidationFieldErrors,
@@ -8,6 +8,7 @@ import {
 } from '@/components/auth/authFormErrors'
 import { useUpdateProfile } from '@/hooks/useProfile'
 import type { MyProfile } from '@/types/user'
+import ProfileImageEditor from './ProfileImageEditor'
 import { editProfileSchema, type EditProfileFormValues } from './editProfileSchema'
 import styles from './EditProfileModal.module.css'
 
@@ -34,7 +35,7 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
     handleSubmit,
     setError,
     clearErrors,
-    watch,
+    control,
     formState: { errors },
   } = useForm<EditProfileFormValues>({
     resolver: zodResolver(editProfileSchema),
@@ -44,8 +45,10 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
     },
   })
 
-  const nickname = watch('nickname') ?? profile.nickname
-  const bio = watch('bio') ?? profile.bio ?? ''
+  // useForm().watch() 는 매 렌더 새 함수를 반환해 React Compiler 최적화를 막는다.
+  // 필드 단위 구독인 useWatch 로 대체한다.
+  const nickname = useWatch({ control, name: 'nickname' }) ?? profile.nickname
+  const bio = useWatch({ control, name: 'bio' }) ?? profile.bio ?? ''
 
   const remainingDays = nicknameRemainingDays(profile.nicknameChangeableAt)
   const isNicknameLocked = remainingDays !== null
@@ -119,13 +122,7 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className={styles.body}>
-            <div className={styles.avatarRow}>
-              <div className={styles.avatarPreview}>{nickname.trim()[0] ?? profile.nickname[0] ?? '?'}</div>
-              <div>
-                <div className={styles.avatarLabel}>프로필 사진</div>
-                <div className={styles.avatarNote}>이미지 업로드는 추후 지원 예정입니다</div>
-              </div>
-            </div>
+            <ProfileImageEditor profile={profile} />
 
             <div className={styles.field}>
               <div className={styles.fieldHeader}>
