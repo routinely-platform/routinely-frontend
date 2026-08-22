@@ -25,3 +25,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# AI 작업 계획 (워크트리 전용, 커밋하지 않음)
+WORKPLAN.md
