@@ -123,29 +123,71 @@ npm run format    # prettier --write src/
 | 도메인 | 경로 접두사 |
 |---|---|
 | 회원 / 인증 / 프로필 | `/api/v1/users`, `/api/v1/auth` |
-| 루틴 / 수행기록 / 피드 / 통계 | `/api/v1/routines` |
+| 루틴 템플릿 | `/api/v1/routine-templates` |
+| 루틴 인스턴스 | `/api/v1/routines` |
+| 수행 기록 | `/api/v1/routine-executions` |
+| 피드 / 리액션 | `/api/v1/feed` |
+| 통계 | `/api/v1/statistics` |
+| 카테고리 | `/api/v1/categories` |
 | 챌린지 / 참여 / 랭킹 | `/api/v1/challenges` |
-| 채팅 | `/api/v1/chats` + STOMP |
+| 채팅 | `/api/v1/chat` + STOMP |
 | 알림 | `/api/v1/notifications` + SSE |
+
+> 루틴 도메인은 **한 서비스(routine-service)가 담당하지만 경로는 다섯으로 갈린다.**
+> `/api/v1/routines` 하나로 뭉뚱그리면 게이트웨이 라우트와 어긋난다.
 
 홈 화면은 게이트웨이가 여러 서비스를 병렬 집계해 `/api/v1/home` 하나로 내려준다.
 개별 API를 여러 번 호출해 조립하지 않는다.
 
 ## 8. 실시간 통신
 
-**채팅 (STOMP)** — 연결 `ws://{gateway}/ws/chat` / 구독 `/topic/chat/{roomId}` / 발행 `/app/chat/{roomId}/message`
+**채팅 (STOMP)** — 연결 `ws://{gateway}/ws/chat` / 구독 `/topic/chat.room.{roomId}` / 발행 `/app/chat.send`
+
+> 구독·발행 경로는 **점(`.`) 구분**이다. 발행은 목적지에 `roomId`를 넣지 않고 **메시지 바디에 담는다**
+> (`{ roomId, messageType, content, imageUrl }`). 백엔드 `docs/requirements/api-spec.md` 4-2가 기준이다.
 STOMP 연결은 채팅방 입장 시 수립하고 퇴장 시 해제한다. **마운트/언마운트 정리를 빠뜨리면 메모리 누수가 난다.**
 
 **알림 (SSE)** — `GET /api/v1/notifications/stream`
 `EventSource` API는 커스텀 헤더를 못 붙이므로 fetch 기반 스트리밍이나 라이브러리를 쓴다.
 
-## 9. MVP 범위 밖
+## 9. 문서 갱신 규칙
+
+### 9-1. 제품 규약이 바뀌면 — `docs/product/policies.md`
+
+화면을 만들다 **규약이 정해지거나 뒤집히면** 워크스페이스 루트
+`../../docs/product/policies.md`(워크트리에서는 두 단계 위)의 해당 항목과 **상태를 함께 갱신한다.**
+🟡(미정)가 🟢(확정)이 되는 순간을 놓치지 않는다.
+
+**화면이 규약의 유일한 도달 경로인 경우가 많다.** 예를 들어 백필(지난 날짜 인증)은 API가 허용해도
+화면에 진입 지점이 없으면 사용자가 도달할 수 없다. 그래서 백필은 홈·통계 달력·루틴 상세 달력
+**세 곳**에 진입 지점을 둔다(`screens.md` §3·§6·§13).
+
+이런 항목은 `policies.md` §9 불일치 대장에 남는다. **남아 있는 게 곧 할 일이고, 처리하면 지운다.**
+
+### 9-2. 화면 명세 — `docs/product/screens.md` + `prototype.html`
+
+화면 구성·상태·문구가 바뀌면 갱신한다. **`screens.md`와 `prototype.html`은 한 쌍이다** —
+어긋나면 남에게 보여줄 수 없으므로 같이 고친다. 특히 **경고·확인 문구**는 정책의 일부다
+(탈퇴 확인, 과거 시작일 경고, 템플릿 수정 안내 등).
+
+### 9-3. 백엔드 계약이 바뀌면
+
+REST는 Swagger를, **이벤트·gRPC는 백엔드의
+`docs/architecture/service-interaction-map.md`**(Mermaid 관계도)를 본다.
+프론트가 직접 고칠 일은 없지만, **채팅(STOMP)·알림(SSE) 경로가 바뀌면** §7·§8 표를 함께 고친다.
+
+### 9-4. 포트폴리오 — `../../portfolio/`
+
+화면 슬라이스를 백엔드에 연결하거나 새 패턴을 도입하면 `interview-qa.md`·`tech-story.md`에 남긴다.
+프론트–백 이음새(인증 헤더 배선, 로딩·에러·빈 상태, DTO↔타입 계약)가 특히 설명하기 좋다.
+
+## 10. MVP 범위 밖
 
 소셜 로그인 UI · 피드 댓글 — 요청받지 않는 한 구현하지 않는다.
 
 > 프로필 이미지 업로드는 #56에서 구현되어 범위 밖에서 제외됐다.
 
-## 10. 학습 모드 (프론트엔드)
+## 11. 학습 모드 (프론트엔드)
 
 백엔드의 "핵심 로직을 빈칸으로" 방식은 **사용자가 이미 아는 영역**을 전제한다.
 사용자는 프론트엔드 기본기가 없으므로 프론트에는 그 방식을 쓰지 않는다.
