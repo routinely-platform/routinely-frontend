@@ -141,14 +141,19 @@ npm run format    # prettier --write src/
 
 ## 8. 실시간 통신
 
-**채팅 (STOMP)** — 연결 `ws://{gateway}/ws/chat` / 구독 `/topic/chat.room.{roomId}` / 발행 `/app/chat.send`
+**채팅 (STOMP)** — 연결 `ws://{gateway}/ws/chat` / 구독 `/sub/chat/challenges/{challengeId}` / 발행 `/pub/chat/challenges/{challengeId}`
 
-> 구독·발행 경로는 **점(`.`) 구분**이다. 발행은 목적지에 `roomId`를 넣지 않고 **메시지 바디에 담는다**
-> (`{ roomId, messageType, content, imageUrl }`). 백엔드 `docs/requirements/api-spec.md` 4-2가 기준이다.
-STOMP 연결은 채팅방 입장 시 수립하고 퇴장 시 해제한다. **마운트/언마운트 정리를 빠뜨리면 메모리 누수가 난다.**
+> **방은 챌린지 ID로 찾는다**(백엔드 ADR-0046, 2026-09-13). 방 번호(`roomId`)도 채팅방 목록 API도 없다.
+> 발행 바디는 **`{ content }`만** — `messageType` · `imageUrl`을 보내지 않는다(IMAGE는 v2).
+> 토큰은 **STOMP `CONNECT` 프레임 헤더**에 싣는다. URL에 싣지 않는다.
+> 백엔드 `api-spec.md` 4-2는 #163 갱신 전이라 옛 경로(`/topic/chat.room.{roomId}` · `/app/chat.send`)가 남아 있다 — **이 절이 맞다.**
+
+STOMP 연결은 채팅 도크가 화면에 나타날 때 수립하고 화면을 떠날 때 해제한다. **도크를 접는 것은 해제가 아니다**(FE #28).
+**마운트/언마운트 정리를 빠뜨리면 메모리 누수가 난다.**
 
 **알림 (SSE)** — `GET /api/v1/notifications/stream`
-`EventSource` API는 커스텀 헤더를 못 붙이므로 fetch 기반 스트리밍이나 라이브러리를 쓴다.
+`EventSource`는 헤더를 못 붙이므로 **`@microsoft/fetch-event-source`로 `Authorization` 헤더**를 붙인다(백엔드 ADR-0021).
+**쿼리 토큰(`?token=`)은 쓰지 않는다.** 401이면 `src/api/client.ts`와 **같은 갱신 함수**로 토큰을 갱신한 뒤 재연결한다(FE #24).
 
 ## 9. 문서 갱신 규칙
 
