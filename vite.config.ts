@@ -14,5 +14,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // api/client.ts가 import 시점에 이 값을 요구한다. 테스트는 실제로 요청하지 않는다
+    env: { VITE_API_BASE_URL: 'http://localhost/api/v1' },
   },
 })
