@@ -41,12 +41,6 @@ const ICON_PATHS: Record<string, ReactNode> = {
       <rect x="17" y="14" width="3" height="5" />
     </>
   ),
-  bell: (
-    <>
-      <path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9z" />
-      <path d="M10 21a2 2 0 004 0" />
-    </>
-  ),
   chevronDown: <path d="M6 9l6 6 6-6" />,
   user: (
     <>
@@ -81,24 +75,6 @@ function NavIcon({ name }: { name: string }) {
   )
 }
 
-function BellIcon() {
-  return (
-    <svg
-      width={20}
-      height={20}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={1.8}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {ICON_PATHS.bell}
-    </svg>
-  )
-}
-
 function ProfileMenuIcon({ name }: { name: 'chevronDown' | 'user' | 'logout' }) {
   return (
     <svg
@@ -123,7 +99,6 @@ export default function Header() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const profileMenuRef = useRef<HTMLDivElement>(null)
-  const notificationCount = 0
 
   const isActive = (path: string): boolean => {
     if (path === '/') return pathname === '/'
@@ -210,11 +185,6 @@ export default function Header() {
       </nav>
 
       <div className={styles.actions}>
-        <Link to="/notifications" aria-label="알림" className={styles.iconLink}>
-          <BellIcon />
-          {notificationCount > 0 && <span className={styles.badge}>{notificationCount}</span>}
-        </Link>
-
         <div className={styles.profileMenuWrapper} ref={profileMenuRef}>
           <button
             type="button"

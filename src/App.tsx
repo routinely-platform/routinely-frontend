@@ -10,7 +10,6 @@ import RoutinesPage from '@/pages/RoutinesPage'
 import ChallengesPage from '@/pages/ChallengesPage'
 import FeedPage from '@/pages/FeedPage'
 import StatisticsPage from '@/pages/StatisticsPage'
-import NotificationsPage from '@/pages/NotificationsPage'
 import ProfilePage from '@/pages/ProfilePage'
 import NotFoundPage from '@/pages/NotFoundPage'
 
@@ -31,7 +30,6 @@ export default function App() {
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
-          <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

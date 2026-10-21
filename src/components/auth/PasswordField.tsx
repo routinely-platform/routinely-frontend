@@ -1,20 +1,32 @@
-import { useState, type ChangeEvent, type ClipboardEvent, type InputHTMLAttributes } from 'react'
+import {
+  useId,
+  useState,
+  type ChangeEvent,
+  type ClipboardEvent,
+  type InputHTMLAttributes,
+} from 'react'
 import styles from './authForm.module.css'
 
 interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+  /** 입력 위 시각 라벨. placeholder는 입력을 시작하면 사라지므로 라벨이 칸의 이름을 맡는다 */
+  label?: string
   errorMessage?: string
 }
 
 const ASCII_PRINTABLE_PATTERN = /[ -~]/g
 
 export default function PasswordField({
+  label,
   errorMessage,
+  id,
   className,
   onChange,
   onPaste,
   ...props
 }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false)
+  const generatedId = useId()
+  const inputId = id ?? generatedId
   const inputClassName = [styles.input, errorMessage ? styles.inputError : '', className]
     .filter(Boolean)
     .join(' ')
@@ -58,9 +70,15 @@ export default function PasswordField({
 
   return (
     <div className={styles.field}>
+      {label && (
+        <label htmlFor={inputId} className={styles.label}>
+          {label}
+        </label>
+      )}
       <div className={styles.passwordInputWrap}>
         <input
           {...props}
+          id={inputId}
           type={isVisible ? 'text' : 'password'}
           className={inputClassName}
           autoCapitalize="none"

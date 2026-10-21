@@ -94,11 +94,14 @@ export default function SignupPage() {
         style={{ marginTop: 28, gap: 14 }}
       >
         <div className={styles.field}>
+          <label htmlFor="signup-email" className={styles.label}>
+            이메일
+          </label>
           <input
+            id="signup-email"
             type="email"
             autoComplete="email"
-            aria-label="이메일"
-            placeholder="이메일"
+            placeholder="you@example.com"
             {...register('email')}
             className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
           />
@@ -106,11 +109,14 @@ export default function SignupPage() {
         </div>
 
         <div className={styles.field}>
+          <label htmlFor="signup-nickname" className={styles.label}>
+            닉네임
+          </label>
           <input
+            id="signup-nickname"
             type="text"
             autoComplete="nickname"
-            aria-label="닉네임"
-            placeholder="닉네임 (2~20자)"
+            placeholder="2~20자"
             {...register('nickname')}
             className={`${styles.input} ${errors.nickname ? styles.inputError : ''}`}
           />
@@ -118,9 +124,10 @@ export default function SignupPage() {
         </div>
 
         <PasswordField
+          id="signup-password"
+          label="비밀번호"
           autoComplete="new-password"
-          aria-label="비밀번호"
-          placeholder="비밀번호 (영문 8자 이상)"
+          placeholder="영문 8자 이상"
           errorMessage={errors.password?.message}
           {...register('password')}
         />

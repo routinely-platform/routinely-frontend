@@ -1,0 +1,142 @@
+/* 로그인 우측만 브랜드색을 면으로 쓴다. 그라데이션이 테마와 무관하므로
+   그 위의 카드도 #fff · --ink-* 로 고정한다 — --surface를 쓰면 다크에서 카드가 묻힌다 */
+.panel {
+  display: none;
+  min-width: 0;
+  color: #fff;
+  background: linear-gradient(155deg, var(--coral-500), var(--sunset-500));
+}
+
+.kicker {
+  margin-bottom: 7px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+  font-size: 13.5px;
+}
+
+.title {
+  font-size: clamp(26px, 3.6vw, 38px);
+  line-height: 1.14;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+}
+
+.card {
+  padding: 22px;
+  background: #fff;
+  color: var(--ink-800);
+  border-radius: 20px;
+  box-shadow:
+    0 12px 34px rgba(120, 40, 10, 0.26),
+    0 2px 6px rgba(120, 40, 10, 0.16);
+}
+
+.cardHead {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.cardHead > div {
+  display: grid;
+  gap: 3px;
+}
+
+.cardHead small,
+.row small {
+  color: var(--ink-500);
+  font-size: 12px;
+}
+
+.cardHead strong {
+  font-size: 16px;
+}
+
+.cardHead b {
+  color: var(--coral-600);
+  font-variant-numeric: tabular-nums;
+}
+
+.track {
+  height: 6px;
+  margin: 15px 0 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--coral-100);
+}
+
+.track i {
+  display: block;
+  width: 33.333%;
+  height: 100%;
+  background: var(--coral-500);
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding-block: 11px;
+  border-bottom: 1px solid var(--ink-100);
+}
+
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row > span {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ink-200);
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.row > div {
+  min-width: 0;
+  display: grid;
+}
+
+.row > div strong {
+  font-size: 14px;
+}
+
+.row > b {
+  color: var(--ink-500);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.rowDone {
+  color: var(--ink-500);
+}
+
+.rowDone > span {
+  background: var(--coral-500);
+  color: #fff;
+  border-color: var(--coral-500);
+}
+
+.foot {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13.5px;
+}
+
+/* 768px 미만에서는 접고 폼만 남긴다 */
+@media (min-width: 768px) {
+  .panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 34px;
+    padding: clamp(32px, 5vw, 64px);
+  }
+
+  .foot {
+    margin-top: auto;
+  }
+}

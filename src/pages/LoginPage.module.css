@@ -1,0 +1,18 @@
+/* 좌우 여백은 폼 영역 패딩만 둔다. 34rem이면 넓은 화면에서 제목·설명이 한 줄에 들어가고,
+   좁아지면 AuthIntro의 text-wrap: balance로 자연스럽게 두 줄이 된다 */
+.body {
+  width: min(100%, 34rem);
+  margin: 38px auto 30px;
+}
+
+.foot {
+  margin-top: auto;
+  color: var(--text-dim);
+  font-size: 12.5px;
+}
+
+@media (min-width: 768px) {
+  .body {
+    margin-block: auto;
+  }
+}
