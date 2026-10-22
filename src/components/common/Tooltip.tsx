@@ -38,8 +38,11 @@ const Tooltip = ({ content, label }: TooltipProps) => {
   const wrapRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const bodyRef = useRef<HTMLSpanElement>(null)
-  // 트리거를 누르고 있는 포인터 종류. 누름이 끝나는 click · blur · 이탈 · 취소에서 비운다
-  const pressingPointer = useRef<string | null>(null)
+  // 포인터로 트리거를 누르는 중인가 — 포커스로 열지 말지 가른다. click · blur · 이탈 · 취소에서 내린다
+  const isPressing = useRef(false)
+  // 트리거를 마지막으로 누른 포인터 종류 — click이 마우스였는지 가른다.
+  // 트리거의 포인터 click은 반드시 트리거 pointerdown 뒤에 오므로 비우지 않는다
+  const lastPointerType = useRef<string | null>(null)
 
   // 열릴 때 가운데 정렬 위치를 재고, 뷰포트 여백 안으로 밀어 넣는다
   useLayoutEffect(() => {
@@ -54,7 +57,8 @@ const Tooltip = ({ content, label }: TooltipProps) => {
     const viewportLeft = clamp(
       triggerCenter - bodyWidth / 2,
       VIEWPORT_MARGIN,
-      window.innerWidth - VIEWPORT_MARGIN - bodyWidth
+      // innerWidth는 세로 스크롤바까지 포함한다 — 스크롤바 아래로 들어가지 않게 clientWidth를 쓴다
+      document.documentElement.clientWidth - VIEWPORT_MARGIN - bodyWidth
     )
 
     setPlacement({
@@ -89,16 +93,15 @@ const Tooltip = ({ content, label }: TooltipProps) => {
   const handlePointerLeave = (event: PointerEvent) => {
     if (event.pointerType !== 'mouse') return
     setOpen(false)
-    // 누른 채 벗어나면 트리거에 click이 오지 않는다 — 남겨 두면 다음 포커스를 막는다
-    pressingPointer.current = null
+    // 누른 채 벗어나면 트리거에 click이 오지 않을 수 있다 — 남겨 두면 다음 포커스를 막는다
+    isPressing.current = false
   }
 
   const handleClick = (event: MouseEvent) => {
-    const pointerType = pressingPointer.current
-    pressingPointer.current = null
+    isPressing.current = false
     // detail 0은 키보드(Enter/Space)가 일으킨 click이다 — 직전 포인터와 상관없이 토글
     // 마우스 클릭은 hover가 이미 열었으므로 토글하지 않는다
-    if (event.detail !== 0 && pointerType === 'mouse') return
+    if (event.detail !== 0 && lastPointerType.current === 'mouse') return
     setOpen((prev) => !prev)
   }
 
@@ -117,21 +120,20 @@ const Tooltip = ({ content, label }: TooltipProps) => {
         aria-label={label}
         aria-describedby={tooltipId}
         onPointerDown={(event) => {
-          pressingPointer.current = event.pointerType
+          isPressing.current = true
+          lastPointerType.current = event.pointerType
         }}
         onPointerCancel={() => {
-          pressingPointer.current = null
+          isPressing.current = false
         }}
         onClick={handleClick}
         // 포인터로 누르며 생긴 포커스는 열지 않는다 — 이어지는 click의 토글과 겹친다
         onFocus={(event) => {
-          if (pressingPointer.current === null && isFocusVisible(event.currentTarget)) {
-            setOpen(true)
-          }
+          if (!isPressing.current && isFocusVisible(event.currentTarget)) setOpen(true)
         }}
         onBlur={() => {
           setOpen(false)
-          pressingPointer.current = null
+          isPressing.current = false
         }}
       >
         <span aria-hidden="true">i</span>

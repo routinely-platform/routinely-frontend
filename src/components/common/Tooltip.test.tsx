@@ -140,18 +140,46 @@ describe('Tooltip', () => {
     expect(wrap).toHaveAttribute('data-state', 'closed')
   })
 
-  describe('뷰포트 보정 — 본문은 화면 여백 8px 안에 들어가고 화살표는 트리거를 가리킨다', () => {
-    const VIEWPORT = 1024
+  it('마우스를 누른 채 벗어났다가 돌아와 놓아도 닫히지 않는다', async () => {
+    const user = userEvent.setup()
+    const { trigger, outside, wrap } = renderTooltip()
+
+    await user.pointer([
+      { keys: '[MouseLeft>]', target: trigger },
+      { target: outside },
+      { target: trigger },
+      { keys: '[/MouseLeft]' },
+    ])
+
+    expect(wrap).toHaveAttribute('data-state', 'open')
+  })
+
+  it('마우스로 클릭한 뒤에도 키보드 Enter는 토글된다', async () => {
+    const user = userEvent.setup()
+    const { trigger, wrap } = renderTooltip()
+
+    await user.click(trigger)
+    await user.keyboard('{Enter}')
+
+    expect(wrap).toHaveAttribute('data-state', 'closed')
+  })
+
+  describe('뷰포트 보정 — 본문은 스크롤바를 뺀 화면 여백 8px 안에 들어가고 화살표는 트리거를 가리킨다', () => {
+    // 세로 스크롤바 15px — innerWidth는 스크롤바를 포함하고 clientWidth는 뺀다
+    const INNER_WIDTH = 1024
+    const VIEWPORT = 1009
     const BODY_WIDTH = 240
     const TRIGGER_WIDTH = 16
 
     it.each([
       // [설명, 트리거 left, 기대 본문 viewport left, 기대 화살표 left]
       ['왼쪽 가장자리면 왼쪽 여백에 붙인다', 4, 8, 12],
-      ['오른쪽 가장자리면 오른쪽 여백에 붙인다', 1000, 776, 228],
+      ['오른쪽 가장자리면 오른쪽 여백에 붙인다', 1000, 761, 228],
+      ['스크롤바 바로 앞이어도 스크롤바 아래로 들어가지 않는다', 980, 761, 227],
       ['여유가 있으면 트리거 가운데에 둔다', 500, 388, 120],
     ])('%s', async (_, triggerLeft, expectedLeft, expectedArrow) => {
-      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(VIEWPORT)
+      vi.spyOn(window, 'innerWidth', 'get').mockReturnValue(INNER_WIDTH)
+      vi.spyOn(document.documentElement, 'clientWidth', 'get').mockReturnValue(VIEWPORT)
       vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
         this: HTMLElement
       ) {
