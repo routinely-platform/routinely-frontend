@@ -1,11 +1,11 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
-import type { PointerEvent, ReactNode } from 'react'
+import type { MouseEvent, PointerEvent, ReactNode } from 'react'
 import styles from './Tooltip.module.css'
 
 // 본문이 뷰포트 가장자리에서 띄울 최소 여백(px)
 const VIEWPORT_MARGIN = 8
-
-type Align = 'center' | 'start' | 'end'
+// 화살표가 본문의 둥근 모서리 밖으로 나가지 않게 두는 안쪽 여백(px)
+const ARROW_INSET = 12
 
 interface TooltipProps {
   /** "왜"와 "규칙"만 담는다. 없으면 화면을 쓸 수 없는 정보는 넣지 않는다 */
@@ -14,7 +14,15 @@ interface TooltipProps {
   label: string
 }
 
-// jsdom처럼 :focus-visible을 모르는 환경에서는 포커스를 키보드로 본다
+/** 본문 위치 — wrap 기준 본문 left와, 본문 기준 화살표 left(px) */
+interface Placement {
+  bodyLeft: number
+  arrowLeft: number
+}
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(value, max))
+
+// :focus-visible을 모르는 구형 브라우저에서는 포커스를 키보드로 본다
 const isFocusVisible = (element: Element) => {
   try {
     return element.matches(':focus-visible')
@@ -25,29 +33,34 @@ const isFocusVisible = (element: Element) => {
 
 const Tooltip = ({ content, label }: TooltipProps) => {
   const [open, setOpen] = useState(false)
-  const [align, setAlign] = useState<Align>('center')
+  const [placement, setPlacement] = useState<Placement | null>(null)
   const tooltipId = useId()
   const wrapRef = useRef<HTMLSpanElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const bodyRef = useRef<HTMLSpanElement>(null)
-  // 직전 click을 일으킨 포인터 종류 — 마우스 클릭은 hover가 이미 열었으므로 토글하지 않는다
-  const lastPointerType = useRef<string | null>(null)
+  // 트리거를 누르고 있는 포인터 종류. 누름이 끝나는 click · blur · 이탈 · 취소에서 비운다
+  const pressingPointer = useRef<string | null>(null)
 
-  // 열릴 때 가운데 정렬로 뷰포트를 벗어나는지 재고, 벗어나는 쪽 반대편 가장자리에 붙인다
+  // 열릴 때 가운데 정렬 위치를 재고, 뷰포트 여백 안으로 밀어 넣는다
   useLayoutEffect(() => {
-    if (!open || !triggerRef.current || !bodyRef.current) return
+    if (!open || !wrapRef.current || !triggerRef.current || !bodyRef.current) return
 
+    const wrap = wrapRef.current.getBoundingClientRect()
     const trigger = triggerRef.current.getBoundingClientRect()
     const bodyWidth = bodyRef.current.getBoundingClientRect().width
-    const centeredLeft = trigger.left + trigger.width / 2 - bodyWidth / 2
+    const triggerCenter = trigger.left + trigger.width / 2
 
-    if (centeredLeft < VIEWPORT_MARGIN) {
-      setAlign('start')
-    } else if (centeredLeft + bodyWidth > window.innerWidth - VIEWPORT_MARGIN) {
-      setAlign('end')
-    } else {
-      setAlign('center')
-    }
+    // 뷰포트 기준 본문 왼쪽. 본문이 뷰포트보다 넓으면 왼쪽 여백을 우선한다
+    const viewportLeft = clamp(
+      triggerCenter - bodyWidth / 2,
+      VIEWPORT_MARGIN,
+      window.innerWidth - VIEWPORT_MARGIN - bodyWidth
+    )
+
+    setPlacement({
+      bodyLeft: viewportLeft - wrap.left,
+      arrowLeft: clamp(triggerCenter - viewportLeft, ARROW_INSET, bodyWidth - ARROW_INSET),
+    })
   }, [open])
 
   // 열려 있는 동안만 Esc와 바깥 누름을 듣는다
@@ -74,14 +87,18 @@ const Tooltip = ({ content, label }: TooltipProps) => {
     if (event.pointerType === 'mouse') setOpen(true)
   }
   const handlePointerLeave = (event: PointerEvent) => {
-    if (event.pointerType === 'mouse') setOpen(false)
+    if (event.pointerType !== 'mouse') return
+    setOpen(false)
+    // 누른 채 벗어나면 트리거에 click이 오지 않는다 — 남겨 두면 다음 포커스를 막는다
+    pressingPointer.current = null
   }
 
-  const handleClick = () => {
-    const pointerType = lastPointerType.current
-    lastPointerType.current = null
-    if (pointerType === 'mouse') return
-    // 터치 탭 · 펜 · 키보드(Enter/Space)는 토글
+  const handleClick = (event: MouseEvent) => {
+    const pointerType = pressingPointer.current
+    pressingPointer.current = null
+    // detail 0은 키보드(Enter/Space)가 일으킨 click이다 — 직전 포인터와 상관없이 토글
+    // 마우스 클릭은 hover가 이미 열었으므로 토글하지 않는다
+    if (event.detail !== 0 && pointerType === 'mouse') return
     setOpen((prev) => !prev)
   }
 
@@ -100,19 +117,38 @@ const Tooltip = ({ content, label }: TooltipProps) => {
         aria-label={label}
         aria-describedby={tooltipId}
         onPointerDown={(event) => {
-          lastPointerType.current = event.pointerType
+          pressingPointer.current = event.pointerType
+        }}
+        onPointerCancel={() => {
+          pressingPointer.current = null
         }}
         onClick={handleClick}
-        // 마우스 클릭이나 탭으로 생긴 포커스는 열지 않는다 — 탭 토글과 겹친다
+        // 포인터로 누르며 생긴 포커스는 열지 않는다 — 이어지는 click의 토글과 겹친다
         onFocus={(event) => {
-          if (isFocusVisible(event.currentTarget)) setOpen(true)
+          if (pressingPointer.current === null && isFocusVisible(event.currentTarget)) {
+            setOpen(true)
+          }
         }}
-        onBlur={() => setOpen(false)}
+        onBlur={() => {
+          setOpen(false)
+          pressingPointer.current = null
+        }}
       >
         <span aria-hidden="true">i</span>
       </button>
-      <span ref={bodyRef} id={tooltipId} role="tooltip" className={styles.body} data-align={align}>
+      <span
+        ref={bodyRef}
+        id={tooltipId}
+        role="tooltip"
+        className={styles.body}
+        style={placement ? { left: placement.bodyLeft, transform: 'none' } : undefined}
+      >
         {content}
+        <span
+          className={styles.arrow}
+          aria-hidden="true"
+          style={placement ? { left: placement.arrowLeft } : undefined}
+        />
       </span>
     </span>
   )

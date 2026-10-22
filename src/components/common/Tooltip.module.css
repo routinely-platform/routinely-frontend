@@ -64,9 +64,8 @@
   font-weight: 700;
 }
 
-/* 화살표 — 트리거 중심을 가리킨다 */
-.body::after {
-  content: '';
+/* 화살표 — 트리거 중심을 가리킨다. 본문이 가장자리로 밀리면 left를 JS가 정한다 */
+.arrow {
   position: absolute;
   top: 100%;
   left: 50%;
@@ -78,27 +77,4 @@
 .wrap[data-state='open'] .body {
   opacity: 1;
   visibility: visible;
-}
-
-/* 뷰포트 왼쪽 가장자리 — 트리거 왼쪽에 붙인다 */
-.body[data-align='start'] {
-  left: -8px;
-  transform: none;
-}
-
-.body[data-align='start']::after {
-  left: 16px;
-}
-
-/* 뷰포트 오른쪽 가장자리 — 트리거 오른쪽에 붙인다 */
-.body[data-align='end'] {
-  left: auto;
-  right: -8px;
-  transform: none;
-}
-
-.body[data-align='end']::after {
-  left: auto;
-  right: 16px;
-  transform: translateX(50%);
 }
