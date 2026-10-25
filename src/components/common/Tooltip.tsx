@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent, PointerEvent, ReactNode } from 'react'
+import { isComposingKeyEvent } from '@/utils/ime'
 import styles from './Tooltip.module.css'
 
 // 본문이 뷰포트 가장자리에서 띄울 최소 여백(px)
@@ -72,7 +73,7 @@ const Tooltip = ({ content, label }: TooltipProps) => {
     if (!open) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
+      if (event.key === 'Escape' && !isComposingKeyEvent(event)) setOpen(false)
     }
     const handlePointerDown = (event: globalThis.PointerEvent) => {
       if (!wrapRef.current?.contains(event.target as Node)) setOpen(false)
