@@ -136,6 +136,44 @@ describe('IME 검사 자체 — 공짜로 통과하지 않는다', () => {
       /새로 만들어졌다/
     )
   })
+
+  it('조합 입력만 찾는다 — 편집 영역은 포함하고 file · date · 편집 불가 영역은 뺀다', () => {
+    render(
+      <form>
+        <input aria-label="제목" />
+        <textarea aria-label="설명" />
+        <div contentEditable aria-label="메모" suppressContentEditableWarning />
+        <div contentEditable={false} aria-label="읽기 전용" />
+        <input type="file" aria-label="사진" />
+        <input type="date" aria-label="시작일" />
+      </form>
+    )
+
+    expect(findTextInputs(document.body).map(labelOf)).toEqual(['제목', '설명', '메모'])
+  })
+
+  // 편집 영역도 값이 바뀔 때마다 key가 바뀌면 매 글자 새로 만들어진다
+  const RemountingEditable = () => {
+    const [text, setText] = useState('')
+    return (
+      <div
+        key={text}
+        contentEditable
+        suppressContentEditableWarning
+        aria-label="메모"
+        onInput={(e) => setText(e.currentTarget.textContent ?? '')}
+      />
+    )
+  }
+
+  it('편집 영역이 리마운트되면 실패한다', () => {
+    render(<RemountingEditable />)
+    const [el] = findTextInputs(document.body)
+
+    expect(() => expectImeSafe(el, { requery: () => screen.getByLabelText('메모') })).toThrow(
+      /새로 만들어졌다/
+    )
+  })
 })
 
 describe('IME 커버리지 가드', () => {

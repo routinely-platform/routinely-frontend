@@ -11,7 +11,9 @@ export function isTextInput(el: Element): el is TextInput {
   if (el instanceof HTMLInputElement) {
     return TEXT_INPUT_TYPES.includes((el.getAttribute('type') ?? '').toLowerCase())
   }
-  return el instanceof HTMLElement && el.isContentEditable
+  // jsdom은 isContentEditable을 구현하지 않아(undefined) 속성으로 판별한다. 'false'만 편집 불가다
+  const editable = el.getAttribute('contenteditable')
+  return el instanceof HTMLElement && editable !== null && editable.toLowerCase() !== 'false'
 }
 
 /** 렌더된 트리에서 조합 입력을 스스로 찾는다 — 화면에 필드가 늘면 검사도 자동으로 늘어난다 */
