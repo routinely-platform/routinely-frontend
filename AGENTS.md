@@ -98,9 +98,11 @@ npm run dev       # Vite 개발 서버
 npm run build     # tsc -b && vite build (타입 오류가 있으면 빌드 실패)
 npm run lint      # eslint
 npm run format    # prettier --write src/
+npm test          # vitest run (jsdom + Testing Library)
 ```
 
-테스트 러너는 아직 없다. 검증은 `npm run build`(타입 체크 겸용)와 `npm run lint`로 한다.
+검증은 `npm test` · `npm run build`(타입 체크 겸용) · `npm run lint` 세 가지로 한다.
+테스트는 대상 옆에 `*.test.tsx`로 두고, API는 `vi.mock('@/api/…')`로 모킹한다(오류 응답은 `src/test/axiosError.ts`).
 
 환경 변수는 **`VITE_` 접두사 필수** — `VITE_API_BASE_URL`, `VITE_WS_URL`.
 
@@ -169,6 +171,39 @@ npm run format    # prettier --write src/
 - 함수형 컴포넌트 + 화살표 함수로 통일
 - Props 타입은 컴포넌트 파일 안에 `{ComponentName}Props` interface로 정의
 - API 응답 타입은 `src/types/`에 정의하고 **`as` 캐스팅을 최소화한다**
+
+## 6-1. 텍스트 입력 — 한글 IME
+
+한글은 IME 조합 상태(`ㄱ` → `기` → `김`)가 `<input>` **노드에 붙어 있다.** 입력 중 노드가 파괴되면
+조합 버퍼째 날아가고 포커스를 다시 줘도 돌아오지 않는다. 영문은 캐럿만 튀어 티가 덜 나므로 **한글로 확인한다.**
+
+React의 재렌더 자체는 노드를 파괴하지 않는다. 파괴 원인은 셋이다 — **금지한다.**
+
+1. **입력의 조상이 조건부 조기 반환·분기로 트리를 갈아엎는다** — 로딩·에러 화면 교체가 대표적이다
+2. **`key`가 바뀐다** — 값 · 시각 · 인덱스로 만든 key는 매번 새 노드다
+3. **렌더 중에 컴포넌트를 정의한다** — 본문 안의 `const Field = () => <input/>`는 매 렌더 새 타입이라 매 키 리마운트된다
+
+| 규칙 | 어떻게 |
+|---|---|
+| 값을 구독하는 조각은 **자식으로 뺀다** | `useWatch`를 입력이 속한 컴포넌트가 아니라 조각 안에서 부른다 — 글자 수는 `CharCounter`, 저장 버튼 활성은 `EditProfileModal`의 `SaveButton`. 부모가 매 키 재렌더하지 않고, 조각이 스스로 구독하므로 갱신도 빠지지 않는다 |
+| 쿼리 상태로 조기 반환하면 **`data`가 없을 때만** | React Query v5는 배경 refetch가 실패하면 data를 둔 채 `isError=true`가 된다. `if (isError)`로 반환하면 입력 중인 화면이 통째로 사라진다 (`ProfilePage`) |
+| 조합 중 단축키는 무시한다 | Enter 제출 · Escape 닫기는 `isComposingKeyEvent(e)`(`src/utils/ime.ts`)가 참이면 건너뛴다. 셋 중 하나면 참이다 — `isComposing`(Chrome) · `keyCode 229`(Safari는 `compositionend` 뒤에 229로 온다) · **`compositionend` 뒤 100ms 이내**(macOS Chrome은 조합을 확정한 키를 일반 키로 **한 번 더** 보낸다 — Esc 한 번에 keydown 229 → `compositionend` → keydown 27). `isComposing`만 보면 두 경우 모두 샌다 |
+| 서버 요청이 붙는 입력은 **`compositionend` 뒤에** 보낸다 | 조합 중간값(`기`)으로 요청하지 않는다 (닉네임 중복 검사 #41) |
+| 토글은 `type`만 바꾸고 **포커스·캐럿을 지킨다** | 버튼 `onMouseDown` `preventDefault`로 포커스를 뺏지 않고, 토글 직전 선택 영역을 저장해 `useLayoutEffect`에서 복원한다 (`PasswordField`). 키보드로 토글하면 포커스는 버튼에 둔다 |
+| 날짜 입력은 비제어로 둔다 | 직접 타이핑하는 `type="date"`를 매 키 제어 값으로 덮으면 글자마다 리셋된다 (#19) |
+| 채팅은 전송 후 입력창에 포커스를 돌려준다 | Enter 전송에 조합 가드가 없으면 마지막 조합 글자가 남거나 두 번 전송된다 (v2 #28) |
+
+### 회귀 검사 — 입력이 있는 화면은 시나리오를 등록한다
+
+`src/test/ime.test.tsx`의 `SCENARIOS`에 화면을 렌더하는 시나리오를 넣으면, 렌더된 트리의 조합 입력을
+**스스로 찾아** `ㄱ·기·김`을 흘려 넣고 **노드 동일성 · 포커스 · 값**을 본다(`src/test/ime.ts`).
+
+- **커버리지 가드** — `src/**/*.tsx`에 `<input` · `<textarea` · `contentEditable`이 있는데 `SCENARIOS`의 `files`에도,
+  `EXCLUDED`(사유와 함께 — 예: `type="file"`만 있음)에도 없으면 `npm test`가 실패한다
+- 값은 `fireEvent.input(el, { target: { value } })`로 넣는다. **`el.value = v`는 React의 value tracker까지 갱신해
+  `onChange`가 안 불리고 검사가 공짜로 통과한다**
+- 비밀번호는 ASCII만 받으므로 값은 보지 않고 노드·포커스만 본다
+- jsdom은 실제 IME와 브라우저별 이벤트 순서를 흉내 내지 못한다 — 입력 화면을 바꾸면 macOS 한글 IME로 Chrome·Safari에서 직접 쳐 본다
 
 ## 7. 백엔드 접점
 

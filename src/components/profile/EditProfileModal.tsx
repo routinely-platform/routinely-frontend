@@ -1,13 +1,15 @@
 import { useEffect } from 'react'
-import { useForm, useWatch } from 'react-hook-form'
+import { useForm, useWatch, type Control } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
   applyValidationFieldErrors,
   getApiErrorPayload,
   type ValidationFieldErrors,
 } from '@/components/auth/authFormErrors'
+import CharCounter from '@/components/common/CharCounter'
 import { useUpdateProfile } from '@/hooks/useProfile'
 import type { MyProfile } from '@/types/user'
+import { isComposingKeyEvent } from '@/utils/ime'
 import ProfileImageEditor from './ProfileImageEditor'
 import { editProfileSchema, type EditProfileFormValues } from './editProfileSchema'
 import styles from './EditProfileModal.module.css'
@@ -26,7 +28,38 @@ function nicknameRemainingDays(nicknameChangeableAt: string | null): number | nu
   return Math.ceil(diffMs / (1000 * 60 * 60 * 24))
 }
 
+function getChanges(values: EditProfileFormValues, profile: MyProfile) {
+  const nicknameChanged = values.nickname.trim() !== profile.nickname
+  const bioChanged = values.bio.trim() !== (profile.bio ?? '')
+  return { nicknameChanged, hasChanges: nicknameChanged || bioChanged }
+}
+
 const DEFAULT_SAVE_ERROR_MESSAGE = '저장 중 오류가 발생했습니다. 다시 시도해주세요.'
+
+interface SaveButtonProps {
+  control: Control<EditProfileFormValues>
+  profile: MyProfile
+  isNicknameLocked: boolean
+  isPending: boolean
+}
+
+// 저장 버튼 활성 판정은 값을 구독해야 한다. 구독을 이 조각에 두어 모달 본문이 매 키 재렌더하지 않게 한다.
+// useForm().watch() 는 매 렌더 새 함수를 반환해 React Compiler 최적화를 막으므로 필드 단위 useWatch 를 쓴다.
+function SaveButton({ control, profile, isNicknameLocked, isPending }: SaveButtonProps) {
+  const nickname = useWatch({ control, name: 'nickname' }) ?? profile.nickname
+  const bio = useWatch({ control, name: 'bio' }) ?? profile.bio ?? ''
+  const { nicknameChanged, hasChanges } = getChanges({ nickname, bio }, profile)
+
+  return (
+    <button
+      type="submit"
+      className={styles.saveBtn}
+      disabled={isPending || !hasChanges || (nicknameChanged && isNicknameLocked)}
+    >
+      {isPending ? '저장 중...' : '저장'}
+    </button>
+  )
+}
 
 export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
   const { mutateAsync, isPending } = useUpdateProfile()
@@ -45,20 +78,13 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
     },
   })
 
-  // useForm().watch() 는 매 렌더 새 함수를 반환해 React Compiler 최적화를 막는다.
-  // 필드 단위 구독인 useWatch 로 대체한다.
-  const nickname = useWatch({ control, name: 'nickname' }) ?? profile.nickname
-  const bio = useWatch({ control, name: 'bio' }) ?? profile.bio ?? ''
-
   const remainingDays = nicknameRemainingDays(profile.nicknameChangeableAt)
   const isNicknameLocked = remainingDays !== null
-  const nicknameChanged = nickname.trim() !== profile.nickname
-  const bioChanged = bio.trim() !== (profile.bio ?? '')
-  const hasChanges = nicknameChanged || bioChanged
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      // 조합 중 Esc는 IME가 조합을 취소하는 키다 — 모달을 닫지 않는다
+      if (e.key === 'Escape' && !isComposingKeyEvent(e)) onClose()
     }
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
@@ -71,6 +97,7 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
   const onSubmit = async (values: EditProfileFormValues) => {
     clearErrors('root')
 
+    const { nicknameChanged, hasChanges } = getChanges(values, profile)
     if (!hasChanges) {
       return
     }
@@ -151,7 +178,7 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
             <div className={styles.field}>
               <div className={styles.fieldHeader}>
                 <label htmlFor="edit-bio" className={styles.label}>한 줄 소개</label>
-                <span className={styles.counter}>{bio.length}/100</span>
+                <CharCounter control={control} name="bio" max={100} className={styles.counter} />
               </div>
               <textarea
                 id="edit-bio"
@@ -170,13 +197,12 @@ export default function EditProfileModal({ profile, onClose, onSaved }: Props) {
             <button type="button" className={styles.cancelBtn} onClick={onClose}>
               취소
             </button>
-            <button
-              type="submit"
-              className={styles.saveBtn}
-              disabled={isPending || !hasChanges || (nicknameChanged && isNicknameLocked)}
-            >
-              {isPending ? '저장 중...' : '저장'}
-            </button>
+            <SaveButton
+              control={control}
+              profile={profile}
+              isNicknameLocked={isNicknameLocked}
+              isPending={isPending}
+            />
           </div>
         </form>
       </div>

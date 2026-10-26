@@ -23,7 +23,7 @@ function formatJoinDate(createdAt: string): string {
 }
 
 export default function ProfilePage() {
-  const { data: profile, isLoading, isError } = useMyProfile()
+  const { data: profile, isLoading } = useMyProfile()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
@@ -39,15 +39,16 @@ export default function ProfilePage() {
     return () => window.clearTimeout(timeoutId)
   }, [successMessage])
 
-  if (isLoading) {
-    return (
-      <div className={styles.loadingWrapper}>
-        <div className={styles.spinner} />
-      </div>
-    )
-  }
-
-  if (isError || !profile) {
+  // 로딩 · 에러 화면은 data가 없을 때만 — React Query v5는 배경 refetch가 실패하면 data를 둔 채
+  // isError가 된다. 그때 화면을 갈아엎으면 수정 모달째 언마운트돼 입력하던 값이 사라진다
+  if (!profile) {
+    if (isLoading) {
+      return (
+        <div className={styles.loadingWrapper}>
+          <div className={styles.spinner} />
+        </div>
+      )
+    }
     return (
       <div className={styles.loadingWrapper}>
         <p className={styles.errorText}>프로필을 불러오지 못했습니다.</p>

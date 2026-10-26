@@ -1,19 +1,30 @@
 import {
+  useCallback,
   useId,
+  useLayoutEffect,
+  useRef,
   useState,
   type ChangeEvent,
   type ClipboardEvent,
-  type InputHTMLAttributes,
+  type ComponentPropsWithRef,
 } from 'react'
 import styles from './authForm.module.css'
 
-interface PasswordFieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
+// React 19에서 ref는 일반 prop이다 — register()의 ref가 여기로 들어온다
+interface PasswordFieldProps extends Omit<ComponentPropsWithRef<'input'>, 'type'> {
   /** 입력 위 시각 라벨. placeholder는 입력을 시작하면 사라지므로 라벨이 칸의 이름을 맡는다 */
   label?: string
   errorMessage?: string
 }
 
 const ASCII_PRINTABLE_PATTERN = /[ -~]/g
+
+/** 토글 직전 입력의 선택 영역 — 입력에 포커스가 있었을 때만 남긴다 */
+interface SavedSelection {
+  start: number | null
+  end: number | null
+  direction: 'forward' | 'backward' | 'none' | null
+}
 
 export default function PasswordField({
   label,
@@ -22,14 +33,48 @@ export default function PasswordField({
   className,
   onChange,
   onPaste,
+  ref,
   ...props
 }: PasswordFieldProps) {
   const [isVisible, setIsVisible] = useState(false)
+  const inputRef = useRef<HTMLInputElement | null>(null)
+  const savedSelection = useRef<SavedSelection | null>(null)
   const generatedId = useId()
   const inputId = id ?? generatedId
   const inputClassName = [styles.input, errorMessage ? styles.inputError : '', className]
     .filter(Boolean)
     .join(' ')
+
+  // 내부 ref(캐럿 복원)와 바깥 ref(register)를 함께 건다
+  const setInputRef = useCallback(
+    (node: HTMLInputElement | null) => {
+      inputRef.current = node
+      if (typeof ref === 'function') ref(node)
+      else if (ref) ref.current = node
+    },
+    [ref],
+  )
+
+  // type을 바꾸면 브라우저가 캐럿을 끝으로 보내거나 선택을 지운다 — 칠하기 전에 되돌린다
+  useLayoutEffect(() => {
+    const input = inputRef.current
+    const selection = savedSelection.current
+    savedSelection.current = null
+    if (!input || !selection || selection.start === null || selection.end === null) return
+
+    input.focus()
+    input.setSelectionRange(selection.start, selection.end, selection.direction ?? undefined)
+  }, [isVisible])
+
+  const handleToggle = () => {
+    const input = inputRef.current
+    // 키보드(Space/Enter)로 누르면 포커스는 버튼에 있다 — 그때는 키보드 사용자의 위치를 옮기지 않는다
+    savedSelection.current =
+      input && document.activeElement === input
+        ? { start: input.selectionStart, end: input.selectionEnd, direction: input.selectionDirection }
+        : null
+    setIsVisible((prev) => !prev)
+  }
 
   const sanitizeValue = (value: string) => value.match(ASCII_PRINTABLE_PATTERN)?.join('') ?? ''
 
@@ -78,6 +123,7 @@ export default function PasswordField({
       <div className={styles.passwordInputWrap}>
         <input
           {...props}
+          ref={setInputRef}
           id={inputId}
           type={isVisible ? 'text' : 'password'}
           className={inputClassName}
@@ -91,7 +137,9 @@ export default function PasswordField({
         <button
           type="button"
           className={styles.passwordToggle}
-          onClick={() => setIsVisible((prev) => !prev)}
+          // 포인터로 눌러도 입력의 포커스를 뺏지 않는다 — 입력하던 자리에서 그대로 이어 친다
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={handleToggle}
           aria-label={isVisible ? '비밀번호 숨기기' : '비밀번호 보기'}
           aria-pressed={isVisible}
         >
