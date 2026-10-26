@@ -187,7 +187,7 @@ React의 재렌더 자체는 노드를 파괴하지 않는다. 파괴 원인은 
 |---|---|
 | 값을 구독하는 조각은 **자식으로 뺀다** | `useWatch`를 입력이 속한 컴포넌트가 아니라 조각 안에서 부른다 — 글자 수는 `CharCounter`, 저장 버튼 활성은 `EditProfileModal`의 `SaveButton`. 부모가 매 키 재렌더하지 않고, 조각이 스스로 구독하므로 갱신도 빠지지 않는다 |
 | 쿼리 상태로 조기 반환하면 **`data`가 없을 때만** | React Query v5는 배경 refetch가 실패하면 data를 둔 채 `isError=true`가 된다. `if (isError)`로 반환하면 입력 중인 화면이 통째로 사라진다 (`ProfilePage`) |
-| 조합 중 단축키는 무시한다 | Enter 제출 · Escape 닫기는 `isComposingKeyEvent(e)`(`src/utils/ime.ts`)가 참이면 건너뛴다. Chrome은 `isComposing`, **Safari는 `compositionend` 뒤 `keyCode 229`** 로 와서 `isComposing`만 보면 샌다 |
+| 조합 중 단축키는 무시한다 | Enter 제출 · Escape 닫기는 `isComposingKeyEvent(e)`(`src/utils/ime.ts`)가 참이면 건너뛴다. 셋 중 하나면 참이다 — `isComposing`(Chrome) · `keyCode 229`(Safari는 `compositionend` 뒤에 229로 온다) · **`compositionend` 뒤 100ms 이내**(macOS Chrome은 조합을 확정한 키를 일반 키로 **한 번 더** 보낸다 — Esc 한 번에 keydown 229 → `compositionend` → keydown 27). `isComposing`만 보면 두 경우 모두 샌다 |
 | 서버 요청이 붙는 입력은 **`compositionend` 뒤에** 보낸다 | 조합 중간값(`기`)으로 요청하지 않는다 (닉네임 중복 검사 #41) |
 | 토글은 `type`만 바꾸고 **포커스·캐럿을 지킨다** | 버튼 `onMouseDown` `preventDefault`로 포커스를 뺏지 않고, 토글 직전 선택 영역을 저장해 `useLayoutEffect`에서 복원한다 (`PasswordField`). 키보드로 토글하면 포커스는 버튼에 둔다 |
 | 날짜 입력은 비제어로 둔다 | 직접 타이핑하는 `type="date"`를 매 키 제어 값으로 덮으면 글자마다 리셋된다 (#19) |

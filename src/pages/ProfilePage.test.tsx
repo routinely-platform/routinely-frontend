@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getMyProfile } from '@/api/user'
 import { networkError } from '@/test/axiosError'
 import type { MyProfile } from '@/types/user'
+import { COMPOSITION_END_GRACE_MS } from '@/utils/ime'
 import ProfilePage from './ProfilePage'
 
 vi.mock('@/api/user', () => ({
@@ -107,5 +108,38 @@ describe('EditProfileModal — Escape', () => {
     fireEvent.keyDown(screen.getByLabelText('닉네임'), { key: 'Escape', keyCode: 229 })
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  // macOS Chrome 실측 — Esc 한 번에 keydown(229, isComposing) → compositionend → keyup →
+  // keydown(27, isComposing 아님) → keyup. 조합을 확정한 키를 일반 키로 한 번 더 보낸다
+  const pressEscapeWhileComposing = (el: HTMLElement) => {
+    fireEvent.compositionStart(el)
+    fireEvent.compositionUpdate(el, { data: '기' })
+    fireEvent.keyDown(el, { key: 'Escape', keyCode: 229, isComposing: true })
+    fireEvent.compositionEnd(el, { data: '기' })
+    fireEvent.keyUp(el, { key: 'Escape', keyCode: 27 })
+    fireEvent.keyDown(el, { key: 'Escape', keyCode: 27 })
+    fireEvent.keyUp(el, { key: 'Escape', keyCode: 27 })
+  }
+
+  it('조합을 확정한 Escape를 다시 보내도(Chrome — macOS) 모달을 닫지 않는다', async () => {
+    renderProfile()
+    await openModal()
+
+    pressEscapeWhileComposing(screen.getByLabelText('한 줄 소개'))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('조합이 끝나고 잠시 뒤 누른 Escape는 모달을 닫는다', async () => {
+    renderProfile()
+    await openModal()
+    const bio = screen.getByLabelText('한 줄 소개')
+
+    pressEscapeWhileComposing(bio)
+    await act(() => new Promise((resolve) => setTimeout(resolve, COMPOSITION_END_GRACE_MS + 50)))
+    fireEvent.keyDown(bio, { key: 'Escape', keyCode: 27 })
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 })
