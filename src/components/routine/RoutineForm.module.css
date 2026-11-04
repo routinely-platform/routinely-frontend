@@ -3,13 +3,27 @@
 .fields {
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 28px;
+}
+
+/* 폼 안의 토글 칩(카테고리 · 주기 · 요일 · 횟수)만 키운다 — 목록 화면의 필터 칩은 그대로 둔다.
+   토글 칩은 모두 aria-pressed 버튼이다. 높이 약 44px — 아트보드 요일 칩과 같다 */
+.fields [aria-pressed] {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 14.5px;
+}
+
+/* 공용 버튼(.btn)과 모듈 순서에 상관없이 이기도록 .fields 아래로 둔다 */
+.fields .submit {
+  padding: 14px 28px;
+  font-size: 16px;
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .fieldHeader {
@@ -23,7 +37,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text);
 }
@@ -34,20 +48,26 @@
 }
 
 .counter {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 
 .input {
   width: 100%;
-  padding: 11px 14px;
+  padding: 13px 16px;
   border: 1.5px solid var(--border-strong);
   border-radius: 12px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
+}
+
+/* 루틴 이름은 이 폼의 주인공이다 — 아트보드처럼 크고 굵게 */
+.titleInput {
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .input:focus {
@@ -66,51 +86,51 @@
 }
 
 .countInput {
-  width: 96px;
+  width: 110px;
 }
 
 .countRow {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
 .dayChip {
   justify-content: center;
-  width: 42px;
+  width: 50px;
   padding-left: 0;
   padding-right: 0;
 }
 
 .countChip {
   justify-content: center;
-  width: 52px;
+  width: 60px;
   padding-left: 0;
   padding-right: 0;
 }
 
 .hint {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   color: var(--text-dim);
 }
 
 .error {
   margin: 0;
-  font-size: 12.5px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--danger);
 }
 
 .warning {
   margin: 0;
-  padding: 11px 13px;
+  padding: 13px 15px;
   border-radius: 12px;
   background: #fef3c7;
   color: #92400e;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -123,21 +143,26 @@
 }
 
 .source {
-  padding: 12px 14px;
+  padding: 14px 16px;
   border-color: var(--coral-200);
   background: var(--coral-50);
   color: var(--text);
-  font-size: 13.5px;
+  font-size: 14.5px;
   line-height: 1.55;
 }
 
 .checkboxRow {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 14px;
+  gap: 10px;
+  font-size: 15px;
   color: var(--text);
   cursor: pointer;
+}
+
+.checkboxRow input {
+  width: 18px;
+  height: 18px;
 }
 
 .checkboxDisabled {

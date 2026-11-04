@@ -166,7 +166,7 @@ const DefinitionFields = () => {
         </div>
         <input
           id={titleId}
-          className={styles.input}
+          className={cn(styles.input, styles.titleInput)}
           maxLength={100}
           autoComplete="off"
           placeholder="예: 아침 러닝"

@@ -49,7 +49,7 @@
 
 /* 템플릿 수정 — 입력이 들어가 넓고, 길면 대화상자 안에서 스크롤한다 */
 .wide {
-  max-width: 560px;
+  max-width: 640px;
   max-height: calc(100vh - 48px);
   overflow-y: auto;
 }

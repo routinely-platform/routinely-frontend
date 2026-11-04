@@ -270,7 +270,7 @@ const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
         <div>
           <button
             type="submit"
-            className={cn(shared.btn, shared.btnPrimary)}
+            className={cn(shared.btn, shared.btnPrimary, styles.submit)}
             disabled={isSubmitting}
           >
             {isSubmitting ? '시작하는 중...' : '루틴 시작'}
