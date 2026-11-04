@@ -1,0 +1,157 @@
+.page {
+  padding: 28px 0 64px;
+}
+
+.inner {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 22px;
+}
+
+.heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.title {
+  margin: 0;
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text);
+}
+
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  width: fit-content;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+
+.tab {
+  padding: 8px 18px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tabOn {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--sh-1);
+}
+
+.section {
+  margin-top: 18px;
+}
+
+.filters {
+  margin: 18px 0 16px;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--border-strong);
+  border-top-color: var(--coral-500);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.stateText {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.empty {
+  padding: 52px 24px;
+  text-align: center;
+}
+
+.emptyArt {
+  margin-bottom: 12px;
+  font-size: 44px;
+}
+
+.emptyTitle {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.emptyBody {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.emptyActions {
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.note {
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.note b {
+  color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 22px 0 96px;
+  }
+
+  .inner {
+    padding: 0 14px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+}

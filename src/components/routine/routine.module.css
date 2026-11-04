@@ -1,0 +1,156 @@
+/* 루틴 화면이 함께 쓰는 조각 — 카드 · 배지 · 버튼 · 칩 (prototype.html의 r-card · r-badge · r-btn · chip) */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--sh-1);
+}
+
+/* 카드 열 수를 고정하지 않는다 — auto-fit이 아니다. 빈 트랙을 접으면 마지막 줄 카드가 폭 전체로 벌어진다 */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(252px, 1fr));
+  gap: 14px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.badgeOngoing {
+  background: var(--ink-100);
+  color: var(--text-muted);
+}
+
+.badgeCompleted {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.badgeStopped {
+  background: var(--ink-200);
+  color: var(--text-muted);
+}
+
+.badgeChallenge {
+  background: var(--coral-100);
+  color: var(--coral-700);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btnPrimary {
+  background: var(--coral-500);
+  color: #fff;
+  box-shadow: var(--sh-coral);
+}
+
+.btnPrimary:hover {
+  background: var(--coral-600);
+}
+
+.btnOutline {
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--border-strong);
+}
+
+.btnOutline:hover,
+.btnGhost:hover {
+  background: var(--surface-2);
+}
+
+.btnGhost {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btnDanger {
+  background: var(--danger);
+  color: #fff;
+}
+
+.btnSm {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--text-dim);
+  color: var(--text);
+}
+
+.chipOn {
+  border-color: var(--coral-500);
+  background: var(--coral-100);
+  color: var(--coral-700);
+}
+
+.chipOn:hover {
+  border-color: var(--coral-500);
+  color: var(--coral-700);
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.65;
+}
+
+.dim {
+  color: var(--text-dim);
+}

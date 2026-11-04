@@ -1,0 +1,56 @@
+.strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 13px 16px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.chipList {
+  flex: 1;
+  min-width: 0;
+}
+
+.chipSchedule {
+  font-size: 11.5px;
+  color: var(--text-dim);
+}
+
+/* 좁은 화면에서는 칩이 한 줄에 하나씩 서며 185px를 먹어 루틴 카드를 첫 화면 밖으로 민다 — 한 줄 버튼으로 접는다 */
+.collapsed {
+  display: none;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.collapsedText {
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .strip {
+    display: none;
+  }
+
+  .collapsed {
+    display: flex;
+  }
+}

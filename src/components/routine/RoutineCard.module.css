@@ -1,0 +1,72 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 17px;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s,
+    transform 0.15s;
+}
+
+.card:hover {
+  box-shadow: var(--sh-2);
+  transform: translateY(-1px);
+}
+
+.stopped {
+  opacity: 0.72;
+}
+
+/* 완료됨은 상단 3px 초록 바로 성취를 드러낸다 — 테두리만으로는 약하다 (screens.md §16-1) */
+.completed {
+  position: relative;
+  overflow: hidden;
+  padding-top: 20px;
+  border-color: var(--success);
+}
+
+.completed::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--success);
+}
+
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 11px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.emoji {
+  font-size: 23px;
+  line-height: 1;
+}
+
+.title {
+  font-size: 16.5px;
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  margin-top: 4px;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.period {
+  display: block;
+  margin-top: 2px;
+  color: var(--success);
+  font-weight: 600;
+}
