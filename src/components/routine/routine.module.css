@@ -26,9 +26,18 @@
   white-space: nowrap;
 }
 
+/* 진행 중은 지금 살아 있는 상태라 코랄(활성 색)로 둔다 — 회색이면 중단 · 미시작처럼 읽힌다 */
 .badgeOngoing {
-  background: var(--ink-100);
-  color: var(--text-muted);
+  background: var(--coral-100);
+  color: var(--coral-700);
+}
+
+.badgeOngoing::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--coral-500);
 }
 
 .badgeCompleted {
@@ -37,13 +46,14 @@
 }
 
 .badgeStopped {
-  background: var(--ink-200);
-  color: var(--text-muted);
+  background: var(--ink-100);
+  color: var(--text-dim);
 }
 
+/* 챌린지는 상태가 아니라 종류다 — 상태 배지(코랄 · 초록 · 회색)와 겹치지 않게 진한 잉크로 둔다 */
 .badgeChallenge {
-  background: var(--coral-100);
-  color: var(--coral-700);
+  background: var(--ink-800);
+  color: var(--ink-0);
 }
 
 .btn {
