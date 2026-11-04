@@ -4,10 +4,15 @@ import userEvent from '@testing-library/user-event'
 import { useState, type ReactElement } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { getCategories } from '@/api/category'
+import { getMyRoutines, getRoutineTemplates } from '@/api/routine'
 import { getMyProfile } from '@/api/user'
 import LoginPage from '@/pages/LoginPage'
 import ProfilePage from '@/pages/ProfilePage'
+import RoutineNewPage from '@/pages/RoutineNewPage'
+import RoutinesPage from '@/pages/RoutinesPage'
 import SignupPage from '@/pages/SignupPage'
+import type { RoutineTemplate } from '@/types/routine'
 import type { MyProfile } from '@/types/user'
 import { expectImeSafe, findTextInputs, labelOf } from './ime'
 
@@ -18,6 +23,31 @@ vi.mock('@/api/user', () => ({
   uploadProfileImage: vi.fn(),
   deleteProfileImage: vi.fn(),
 }))
+vi.mock('@/api/routine', () => ({
+  getMyRoutines: vi.fn(),
+  getRoutineTemplates: vi.fn(),
+  startRoutine: vi.fn(),
+  createRoutineTemplate: vi.fn(),
+  updateRoutineTemplate: vi.fn(),
+  deleteRoutineTemplate: vi.fn(),
+}))
+vi.mock('@/api/category', () => ({ getCategories: vi.fn() }))
+
+const TEMPLATE: RoutineTemplate = {
+  templateId: 7,
+  title: '아침 러닝',
+  categoryCode: 'EXERCISE',
+  scheduleType: 'MONTHLY_COUNT',
+  daysOfWeek: null,
+  targetCount: 10,
+  challengeId: null,
+}
+
+const withQuery = (ui: ReactElement) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    {ui}
+  </QueryClientProvider>
+)
 
 const PROFILE: MyProfile = {
   userId: 1,
@@ -76,6 +106,37 @@ const SCENARIOS: ImeScenario[] = [
       await screen.findByRole('dialog')
     },
   },
+  {
+    // 템플릿 프리필 — 출처 배지 · 중복 경고 · 체크박스가 제목을 구독해도 제목 입력은 그대로여야 한다
+    name: '루틴 시작 폼',
+    files: [
+      '/src/components/routine/RoutineForm.tsx',
+      '/src/components/routine/DefinitionFields.tsx',
+    ],
+    render: () =>
+      withQuery(
+        <MemoryRouter initialEntries={['/routines/new?templateId=7']}>
+          <RoutineNewPage />
+        </MemoryRouter>
+      ),
+    open: async () => {
+      await screen.findByDisplayValue('아침 러닝')
+    },
+  },
+  {
+    name: '템플릿 수정 대화상자',
+    files: ['/src/components/routine/DefinitionFields.tsx'],
+    render: () =>
+      withQuery(
+        <MemoryRouter initialEntries={['/routines?tab=templates']}>
+          <RoutinesPage />
+        </MemoryRouter>
+      ),
+    open: async () => {
+      await userEvent.setup().click(await screen.findByRole('button', { name: /템플릿 수정/ }))
+      await screen.findByRole('dialog')
+    },
+  },
 ]
 
 /** 입력이 있지만 조합 입력이 아니어서 시나리오가 필요 없는 파일 — 사유를 함께 적는다 */
@@ -86,6 +147,11 @@ const EXCLUDED: Record<string, string> = {
 describe('한글 IME — 조합 중 입력 노드 · 포커스 · 값이 유지된다', () => {
   beforeEach(() => {
     vi.mocked(getMyProfile).mockResolvedValue(PROFILE)
+    vi.mocked(getMyRoutines).mockResolvedValue([])
+    vi.mocked(getRoutineTemplates).mockResolvedValue([TEMPLATE])
+    vi.mocked(getCategories).mockResolvedValue([
+      { code: 'EXERCISE', name: '운동', icon: '🏃', displayOrder: 1 },
+    ])
   })
 
   it.each(SCENARIOS)('$name', async (scenario) => {

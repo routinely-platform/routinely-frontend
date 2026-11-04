@@ -8,11 +8,12 @@ import styles from './TemplateCard.module.css'
 interface TemplateCardProps {
   template: RoutineTemplate
   category: Category | undefined
+  onEdit: (template: RoutineTemplate) => void
   onDelete: (template: RoutineTemplate) => void
 }
 
 // "N번 시작했어요"는 v2 — 템플릿 응답에 횟수가 없다 (#19 MVP 범위)
-const TemplateCard = ({ template, category, onDelete }: TemplateCardProps) => (
+const TemplateCard = ({ template, category, onEdit, onDelete }: TemplateCardProps) => (
   <div className={cn(shared.card, styles.card)}>
     <div className={styles.head}>
       {category && (
@@ -34,6 +35,14 @@ const TemplateCard = ({ template, category, onDelete }: TemplateCardProps) => (
       >
         이 템플릿으로 시작
       </Link>
+      <button
+        type="button"
+        className={cn(shared.btn, shared.btnGhost, shared.btnSm)}
+        aria-label={`${template.title} 템플릿 수정`}
+        onClick={() => onEdit(template)}
+      >
+        ✎
+      </button>
       <button
         type="button"
         className={cn(shared.btn, shared.btnGhost, shared.btnSm)}

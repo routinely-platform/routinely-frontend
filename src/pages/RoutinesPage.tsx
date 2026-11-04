@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import DeleteTemplateDialog from '@/components/routine/DeleteTemplateDialog'
+import EditTemplateDialog from '@/components/routine/EditTemplateDialog'
 import RoutineCard from '@/components/routine/RoutineCard'
 import TemplateCard from '@/components/routine/TemplateCard'
 import TemplateStrip from '@/components/routine/TemplateStrip'
@@ -194,6 +195,7 @@ const TemplatesTab = () => {
   const templatesQuery = useRoutineTemplates()
   const categoryOf = useCategoryLookup()
   const [deleting, setDeleting] = useState<RoutineTemplate | null>(null)
+  const [editing, setEditing] = useState<RoutineTemplate | null>(null)
 
   const templates = templatesQuery.data
   if (!templates) {
@@ -231,6 +233,7 @@ const TemplatesTab = () => {
             key={template.templateId}
             template={template}
             category={categoryOf(template.categoryCode)}
+            onEdit={setEditing}
             onDelete={setDeleting}
           />
         ))}
@@ -241,6 +244,7 @@ const TemplatesTab = () => {
         입니다.
       </div>
       {deleting && <DeleteTemplateDialog template={deleting} onClose={() => setDeleting(null)} />}
+      {editing && <EditTemplateDialog template={editing} onClose={() => setEditing(null)} />}
     </div>
   )
 }

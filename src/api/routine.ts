@@ -50,3 +50,48 @@ export async function getRoutineTemplates(): Promise<RoutineTemplate[]> {
 export async function deleteRoutineTemplate(templateId: number): Promise<void> {
   await apiClient.delete<ApiResponse<void>>(`/routine-templates/${templateId}`)
 }
+
+/** 정의 5필드 — 루틴 직접 시작 · 템플릿 생성 · 템플릿 수정이 같은 모양으로 보낸다 */
+export interface RoutineDefinitionRequest {
+  title: string
+  categoryCode: string
+  scheduleType: ScheduleType
+  daysOfWeek: Weekday[] | null
+  targetCount: number | null
+}
+
+interface RoutinePeriodRequest {
+  /** YYYY-MM-DD */
+  startedAt: string
+  endedAt: string | null
+}
+
+/**
+ * 템플릿 ID와 정의는 하나만 보낸다 — 둘 다 보내면 400 (`StartRoutineRequest.isSourceExclusive`).
+ * 선호 시각 · 선호 요일은 알림이 v2라 보내지 않는다
+ */
+export type StartRoutineRequest = RoutinePeriodRequest &
+  ({ routineTemplateId: number } | RoutineDefinitionRequest)
+
+export async function startRoutine(body: StartRoutineRequest): Promise<Routine> {
+  const res = await apiClient.post<ApiResponse<RawRoutineResponse>>('/routines', body)
+  return normalizeRoutine(unwrapApiResponse(res.data, '루틴을 시작하지 못했습니다.'))
+}
+
+export async function createRoutineTemplate(
+  body: RoutineDefinitionRequest
+): Promise<RoutineTemplate> {
+  const res = await apiClient.post<ApiResponse<RoutineTemplate>>('/routine-templates', body)
+  return unwrapApiResponse(res.data, '템플릿을 저장하지 못했습니다.')
+}
+
+export async function updateRoutineTemplate(
+  templateId: number,
+  body: RoutineDefinitionRequest
+): Promise<RoutineTemplate> {
+  const res = await apiClient.patch<ApiResponse<RoutineTemplate>>(
+    `/routine-templates/${templateId}`,
+    body
+  )
+  return unwrapApiResponse(res.data, '템플릿을 수정하지 못했습니다.')
+}

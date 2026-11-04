@@ -67,3 +67,22 @@ export function formatMonthDay(date: string): string {
   const [, month, day] = date.split('-').map(Number)
   return `${month}월 ${day}일`
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000
+const toUtcMs = (date: string) => {
+  const [year, month, day] = date.split('-').map(Number)
+  return Date.UTC(year, month - 1, day)
+}
+
+/** YYYY-MM-DD에 n일을 더한다 — 달력 날짜끼리의 계산이라 시간대가 끼지 않게 UTC로 센다 */
+export function addDays(date: string, days: number): string {
+  return new Date(toUtcMs(date) + days * DAY_MS).toISOString().slice(0, 10)
+}
+
+/** from에서 to까지 며칠 — to가 앞이면 음수 */
+export function daysBetween(from: string, to: string): number {
+  return Math.round((toUtcMs(to) - toUtcMs(from)) / DAY_MS)
+}
+
+/** 완성된 YYYY-MM-DD인가 — 날짜 입력은 다 치기 전까지 빈 문자열이다 */
+export const isCompleteDate = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value)

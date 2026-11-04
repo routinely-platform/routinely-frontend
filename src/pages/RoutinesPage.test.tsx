@@ -4,7 +4,12 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { getCategories } from '@/api/category'
-import { deleteRoutineTemplate, getMyRoutines, getRoutineTemplates } from '@/api/routine'
+import {
+  deleteRoutineTemplate,
+  getMyRoutines,
+  getRoutineTemplates,
+  updateRoutineTemplate,
+} from '@/api/routine'
 import { networkError } from '@/test/axiosError'
 import type { Category, Routine, RoutineTemplate } from '@/types/routine'
 import RoutinesPage from './RoutinesPage'
@@ -13,12 +18,14 @@ vi.mock('@/api/routine', () => ({
   getMyRoutines: vi.fn(),
   getRoutineTemplates: vi.fn(),
   deleteRoutineTemplate: vi.fn(),
+  updateRoutineTemplate: vi.fn(),
 }))
 vi.mock('@/api/category', () => ({ getCategories: vi.fn() }))
 
 const mockedGetMyRoutines = vi.mocked(getMyRoutines)
 const mockedGetTemplates = vi.mocked(getRoutineTemplates)
 const mockedDeleteTemplate = vi.mocked(deleteRoutineTemplate)
+const mockedUpdateTemplate = vi.mocked(updateRoutineTemplate)
 
 const CATEGORIES: Category[] = [{ code: 'EXERCISE', name: '운동', icon: '🏃', displayOrder: 1 }]
 
@@ -188,6 +195,34 @@ describe('RoutinesPage', () => {
 
     expect(mockedDeleteTemplate).toHaveBeenCalledWith(7)
     expect(await screen.findByText('저장한 템플릿이 없어요')).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('템플릿 수정 — 안내 문구를 보여 주고, 정의 5필드를 보낸다', async () => {
+    mockedUpdateTemplate.mockResolvedValue({ ...TEMPLATE, title: '물 3L' })
+    renderPage('/routines?tab=templates')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: '물 2L 템플릿 수정' }))
+    const dialog = screen.getByRole('dialog')
+    expect(
+      within(dialog).getByText(
+        '진행 중인 루틴에는 적용되지 않습니다. 다음에 시작하는 루틴부터 반영돼요.'
+      )
+    ).toBeInTheDocument()
+
+    const title = within(dialog).getByLabelText('루틴 이름')
+    await user.clear(title)
+    await user.type(title, '물 3L')
+    await user.click(within(dialog).getByRole('button', { name: '저장' }))
+
+    expect(mockedUpdateTemplate).toHaveBeenCalledWith(7, {
+      title: '물 3L',
+      categoryCode: 'EXERCISE',
+      scheduleType: 'WEEKLY_COUNT',
+      daysOfWeek: null,
+      targetCount: 3,
+    })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 

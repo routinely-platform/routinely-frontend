@@ -1,0 +1,152 @@
+/* 루틴 시작 폼 · 템플릿 수정 대화상자가 함께 쓰는 입력 조각 */
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.optional {
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.counter {
+  font-size: 12px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+}
+
+.input:focus {
+  outline: none;
+  border-color: var(--coral-500);
+}
+
+.inputError {
+  border-color: var(--danger);
+}
+
+.dateRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.countInput {
+  width: 96px;
+}
+
+.countRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.dayChip {
+  justify-content: center;
+  width: 42px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.countChip {
+  justify-content: center;
+  width: 52px;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.hint {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.error {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.warning {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.warning b {
+  font-weight: 700;
+}
+
+.warningDim {
+  opacity: 0.75;
+}
+
+.source {
+  padding: 12px 14px;
+  border-color: var(--coral-200);
+  background: var(--coral-50);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.checkboxDisabled {
+  color: var(--text-dim);
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .dateRow {
+    grid-template-columns: 1fr;
+  }
+}

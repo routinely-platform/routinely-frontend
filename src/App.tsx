@@ -7,6 +7,7 @@ import LoginPage from '@/pages/LoginPage'
 import SignupPage from '@/pages/SignupPage'
 import HomePage from '@/pages/HomePage'
 import RoutinesPage from '@/pages/RoutinesPage'
+import RoutineNewPage from '@/pages/RoutineNewPage'
 import ChallengesPage from '@/pages/ChallengesPage'
 import FeedPage from '@/pages/FeedPage'
 import StatisticsPage from '@/pages/StatisticsPage'
@@ -27,6 +28,7 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/routines" element={<RoutinesPage />} />
+          <Route path="/routines/new" element={<RoutineNewPage />} />
           <Route path="/challenges" element={<ChallengesPage />} />
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/statistics" element={<StatisticsPage />} />
