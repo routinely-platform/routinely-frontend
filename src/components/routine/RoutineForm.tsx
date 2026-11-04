@@ -54,15 +54,17 @@ const SourceBadge = ({ template, onDisconnect }: Required<RoutineFormProps>) => 
 
   return (
     <div className={cn(shared.card, styles.source)}>
-      ✦{' '}
-      {edited ? (
-        // 고치면 템플릿 ID를 보낼 수 없다(isSourceExclusive) — 연결이 조용히 끊기지 않게 알린다 (#19 G1)
-        <b>설정을 바꿨어요. 이 루틴은 템플릿과 연결되지 않고 따로 기록돼요.</b>
-      ) : (
-        <>
-          <b>‘{template.title}’</b> 템플릿의 설정을 불러왔어요. 여기서 바꿔도 템플릿은 그대로예요.
-        </>
-      )}{' '}
+      <span aria-hidden="true">✦</span>
+      <span className={styles.sourceText}>
+        {edited ? (
+          // 고치면 템플릿 ID를 보낼 수 없다(isSourceExclusive) — 연결이 조용히 끊기지 않게 알린다 (#19 G1)
+          <b>설정을 바꿨어요. 이 루틴은 템플릿과 연결되지 않고 따로 기록돼요.</b>
+        ) : (
+          <>
+            <b>‘{template.title}’</b> 템플릿의 설정을 불러왔어요. 여기서 바꿔도 템플릿은 그대로예요.
+          </>
+        )}
+      </span>
       <button
         type="button"
         className={cn(shared.btn, shared.btnGhost, shared.btnSm)}
@@ -152,7 +154,7 @@ const SaveAsTemplateField = ({ template }: { template?: RoutineTemplate }) => {
     <label className={cn(styles.checkboxRow, disabled && styles.checkboxDisabled)}>
       <input type="checkbox" disabled={disabled} {...register('saveAsTemplate')} />이 설정을
       템플릿으로도 저장
-      {disabled && <span className={styles.optional}>· 템플릿에서 불러온 설정이에요</span>}
+      {disabled && <span className={styles.checkboxNote}>· 템플릿에서 불러온 설정이에요</span>}
     </label>
   )
 }

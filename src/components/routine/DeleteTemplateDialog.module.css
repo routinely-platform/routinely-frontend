@@ -1,4 +1,7 @@
 .backdrop {
+  /* 한글이 단어 중간에서 줄바꿈되지 않게 한다 ("남 / 아요") */
+  word-break: keep-all;
+  overflow-wrap: break-word;
   position: fixed;
   inset: 0;
   z-index: 40;

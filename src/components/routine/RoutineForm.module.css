@@ -143,12 +143,20 @@
 }
 
 .source {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 16px;
   border-color: var(--coral-200);
   background: var(--coral-50);
   color: var(--text);
   font-size: 14.5px;
   line-height: 1.55;
+}
+
+.sourceText {
+  flex: 1;
+  min-width: 0;
 }
 
 .checkboxRow {
@@ -163,6 +171,12 @@
 .checkboxRow input {
   width: 18px;
   height: 18px;
+}
+
+.checkboxNote {
+  margin-left: 2px;
+  font-size: 14px;
+  color: var(--text-dim);
 }
 
 .checkboxDisabled {

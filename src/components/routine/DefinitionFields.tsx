@@ -61,6 +61,8 @@ const ScheduleDetail = () => {
 
   return (
     <>
+      {/* 주기 설명이 먼저, 그 주기에 딸린 입력 · 범위 안내가 뒤에 온다 */}
+      <p className={styles.hint}>{SCHEDULE_META[scheduleType].hint}</p>
       {scheduleType === 'SPECIFIC_DAYS' && (
         <Controller
           control={control}
@@ -143,7 +145,6 @@ const ScheduleDetail = () => {
         </>
       )}
 
-      <p className={styles.hint}>{SCHEDULE_META[scheduleType].hint}</p>
       <FieldError name="daysOfWeek" />
     </>
   )
