@@ -87,6 +87,7 @@ const ScheduleDetail = () => {
         />
       )}
 
+      {/* 칩은 6회까지 — 주 7회는 매일과 같은 행동인데 스트릭을 세는 단위가 달라진다(주 vs 일) */}
       {scheduleType === 'WEEKLY_COUNT' && (
         <>
           <Controller
@@ -112,8 +113,6 @@ const ScheduleDetail = () => {
               </div>
             )}
           />
-          {/* 주 7회는 매일과 같은 행동인데 스트릭을 세는 단위가 달라진다(주 vs 일) */}
-          <p className={styles.hint}>주 7회는 고를 수 없어요 — 그건 매일과 같아요</p>
         </>
       )}
 

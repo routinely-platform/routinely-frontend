@@ -258,7 +258,6 @@ describe('RoutineNewPage', () => {
 
       expect(screen.getByRole('button', { name: '6회' })).toBeInTheDocument()
       expect(screen.queryByRole('button', { name: '7회' })).not.toBeInTheDocument()
-      expect(screen.getByText('주 7회는 고를 수 없어요 — 그건 매일과 같아요')).toBeInTheDocument()
     })
 
     it('월 N회는 기본 10, 29는 막는다', async () => {
