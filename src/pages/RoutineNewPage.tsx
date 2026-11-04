@@ -25,7 +25,7 @@ export default function RoutineNewPage() {
     // 프리필할 값이 오기 전에는 폼을 그리지 않는다 — 다 친 뒤에 값이 덮이면 안 된다
     content = templatesQuery.isError ? (
       <div className={cn(shared.card, styles.state)} role="alert">
-        <p className={styles.stateText}>템플릿을 불러오지 못했어요.</p>
+        <p className={styles.stateText}>템플릿을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.</p>
         <div className={styles.stateActions}>
           <button
             type="button"
@@ -39,7 +39,7 @@ export default function RoutineNewPage() {
             className={cn(shared.btn, shared.btnGhost, shared.btnSm)}
             onClick={disconnect}
           >
-            빈 폼으로 시작
+            처음부터 만들기
           </button>
         </div>
       </div>
@@ -54,13 +54,13 @@ export default function RoutineNewPage() {
       <RoutineForm key={template.templateId} template={template} onDisconnect={disconnect} />
     ) : (
       <div className={cn(shared.card, styles.state)} role="alert">
-        <p className={styles.stateText}>템플릿을 찾지 못했어요. 삭제됐을 수 있어요.</p>
+        <p className={styles.stateText}>템플릿을 찾을 수 없어요. 이미 삭제되었을 수 있어요.</p>
         <button
           type="button"
           className={cn(shared.btn, shared.btnOutline, shared.btnSm)}
           onClick={disconnect}
         >
-          빈 폼으로 시작
+          처음부터 만들기
         </button>
       </div>
     )
@@ -72,7 +72,7 @@ export default function RoutineNewPage() {
         <Link to="/routines" className={styles.back}>
           ‹ 내 루틴
         </Link>
-        <h1 className={styles.title}>루틴 시작</h1>
+        <h1 className={styles.title}>새 루틴 만들기</h1>
         <div className={cn(shared.card, styles.card)}>{content}</div>
       </div>
     </div>

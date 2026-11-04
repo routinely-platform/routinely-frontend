@@ -10,6 +10,7 @@ import {
   addDays,
   daysBetween,
   deriveRoutineStatus,
+  formatMonthDay,
   isCompleteDate,
   serverToday,
 } from '@/utils/routine'
@@ -56,10 +57,10 @@ const SourceBadge = ({ template, onDisconnect }: Required<RoutineFormProps>) => 
       ✦{' '}
       {edited ? (
         // 고치면 템플릿 ID를 보낼 수 없다(isSourceExclusive) — 연결이 조용히 끊기지 않게 알린다 (#19 G1)
-        <b>값을 고쳤어요. 이 루틴은 템플릿과 따로 기록됩니다.</b>
+        <b>설정을 바꿨어요. 이 루틴은 템플릿과 연결되지 않고 따로 기록돼요.</b>
       ) : (
         <>
-          <b>{template.title}</b> 템플릿에서 시작해요. 여기서 고쳐도 템플릿은 그대로예요.
+          <b>‘{template.title}’</b> 템플릿의 설정을 불러왔어요. 여기서 바꿔도 템플릿은 그대로예요.
         </>
       )}{' '}
       <button
@@ -67,7 +68,7 @@ const SourceBadge = ({ template, onDisconnect }: Required<RoutineFormProps>) => 
         className={cn(shared.btn, shared.btnGhost, shared.btnSm)}
         onClick={onDisconnect}
       >
-        연결 끊기
+        처음부터 만들기
       </button>
     </div>
   )
@@ -81,22 +82,23 @@ const BackdateWarning = () => {
   const back = daysBetween(startedAt, serverToday())
   if (back <= 0) return null
 
+  const from = `${formatMonthDay(startedAt)}부터 시작하면`
   const body =
     scheduleType === 'DAILY'
-      ? `${startedAt}부터 시작하면 아직 인증하지 않은 ${back}일이 미완료로 표시됩니다.`
+      ? `${from} 지난 ${back}일이 미완료로 기록돼요.`
       : scheduleType === 'SPECIFIC_DAYS'
-        ? `${startedAt}부터 시작하면 지난 ${back}일 중 고른 요일이 미완료로 표시됩니다.`
+        ? `${from} 지난 ${back}일 중 고른 요일이 미완료로 기록돼요.`
         : scheduleType === 'WEEKLY_COUNT'
-          ? `${startedAt}부터 시작하면 지난 ${Math.ceil(back / 7)}주치 목표가 미달성으로 계산됩니다.`
-          : `${startedAt}부터 시작하면 지난 ${Math.ceil(back / 30)}달치 목표가 미달성으로 계산됩니다.`
+          ? `${from} 지난 ${Math.ceil(back / 7)}주는 목표 미달성으로 기록돼요.`
+          : `${from} 지난 ${Math.ceil(back / 30)}달은 목표 미달성으로 기록돼요.`
 
   return (
     <p className={styles.warning} role="status">
       ⚠ <b>{body}</b>
       <br />
-      지난 날짜는 나중에 채울 수 있어요.{' '}
+      지난 날짜의 인증은 나중에 채울 수 있어요.{' '}
       <span className={styles.warningDim}>
-        (최대 {BACKDATE_LIMIT_DAYS}일 전까지 고를 수 있어요)
+        시작일은 최대 {BACKDATE_LIMIT_DAYS}일 전까지 정할 수 있어요.
       </span>
     </p>
   )
@@ -135,7 +137,7 @@ const DuplicateWarning = () => {
 
   return (
     <p className={styles.warning} role="status">
-      ⚠ <b>‘{title}’가 이미 진행 중이에요.</b> 그래도 하나 더 만들까요?
+      ⚠ <b>이미 진행 중인 ‘{title}’ 루틴이 있어요.</b> 같은 이름으로 하나 더 만들 수도 있어요.
     </p>
   )
 }
@@ -148,15 +150,15 @@ const SaveAsTemplateField = ({ template }: { template?: RoutineTemplate }) => {
 
   return (
     <label className={cn(styles.checkboxRow, disabled && styles.checkboxDisabled)}>
-      <input type="checkbox" disabled={disabled} {...register('saveAsTemplate')} />
+      <input type="checkbox" disabled={disabled} {...register('saveAsTemplate')} />이 설정을
       템플릿으로도 저장
-      {disabled && <span className={styles.optional}>— 이미 이 템플릿에서 시작해요</span>}
+      {disabled && <span className={styles.optional}>· 템플릿에서 불러온 설정이에요</span>}
     </label>
   )
 }
 
-const DEFAULT_ERROR = '루틴을 시작하지 못했어요. 다시 시도해 주세요.'
-const PARTIAL_ERROR = '템플릿은 저장됐어요. 루틴 시작은 실패했어요 — 다시 시작해 주세요.'
+const DEFAULT_ERROR = '루틴을 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
+const PARTIAL_ERROR = '템플릿은 저장했지만 루틴을 시작하지 못했어요. 다시 시도해 주세요.'
 
 const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
   const navigate = useNavigate()
@@ -254,7 +256,7 @@ const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
             </div>
           </div>
           {/* 습관에는 끝이 없다 — 강제하면 해마다 다시 시작하고 그때마다 스트릭이 끊긴다 */}
-          <p className={styles.hint}>종료일을 비우면 계속 이어집니다</p>
+          <p className={styles.hint}>종료일을 비워 두면 기한 없이 계속돼요.</p>
           <BackdateWarning />
         </div>
 
@@ -273,7 +275,7 @@ const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
             className={cn(shared.btn, shared.btnPrimary, styles.submit)}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '시작하는 중...' : '루틴 시작'}
+            {isSubmitting ? '만드는 중...' : '루틴 만들기'}
           </button>
         </div>
       </form>

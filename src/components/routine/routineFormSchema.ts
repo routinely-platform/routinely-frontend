@@ -18,8 +18,8 @@ const definitionShape = {
     .string()
     .trim()
     .min(1, '루틴 이름을 입력해 주세요.')
-    .max(100, '루틴 이름은 100자 이하여야 해요.'),
-  categoryCode: z.string().min(1, '카테고리를 골라 주세요.'),
+    .max(100, '루틴 이름은 100자까지 입력할 수 있어요.'),
+  categoryCode: z.string().min(1, '카테고리를 선택해 주세요.'),
   scheduleType: z.enum(SCHEDULE_TYPES),
   daysOfWeek: z.array(z.enum(WEEKDAYS)),
   // 주 N회는 칩이라 늘 숫자다
@@ -33,7 +33,11 @@ type DefinitionShapeValues = z.infer<z.ZodObject<typeof definitionShape>>
 /** 주기 유형에 딸린 값 — 고른 유형의 값만 본다. 다른 유형의 값은 남아 있어도 보내지 않는다 */
 const checkSchedule = (values: DefinitionShapeValues, ctx: z.RefinementCtx) => {
   if (values.scheduleType === 'SPECIFIC_DAYS' && values.daysOfWeek.length === 0) {
-    ctx.addIssue({ code: 'custom', path: ['daysOfWeek'], message: '요일을 하나 이상 골라 주세요.' })
+    ctx.addIssue({
+      code: 'custom',
+      path: ['daysOfWeek'],
+      message: '요일을 하나 이상 선택해 주세요.',
+    })
   }
   if (values.scheduleType === 'MONTHLY_COUNT') {
     const count = Number(values.monthlyCount)
@@ -41,7 +45,7 @@ const checkSchedule = (values: DefinitionShapeValues, ctx: z.RefinementCtx) => {
       ctx.addIssue({
         code: 'custom',
         path: ['monthlyCount'],
-        message: `1~${MONTHLY_COUNT_MAX}회 사이로 입력해 주세요.`,
+        message: `횟수는 1~${MONTHLY_COUNT_MAX}회 사이로 입력해 주세요.`,
       })
     }
   }
@@ -63,7 +67,7 @@ export const routineFormSchema = z
     checkSchedule(values, ctx)
 
     if (!isCompleteDate(values.startedAt)) {
-      ctx.addIssue({ code: 'custom', path: ['startedAt'], message: '시작일을 골라 주세요.' })
+      ctx.addIssue({ code: 'custom', path: ['startedAt'], message: '시작일을 선택해 주세요.' })
       return
     }
     // 오늘은 제출하는 순간에 다시 잰다 — 폼을 열어 둔 채 자정을 넘겨도 서버와 같은 기준이다
@@ -71,23 +75,23 @@ export const routineFormSchema = z
       ctx.addIssue({
         code: 'custom',
         path: ['startedAt'],
-        message: `시작일은 ${BACKDATE_LIMIT_DAYS}일 전까지 고를 수 있어요.`,
+        message: `시작일은 오늘부터 최대 ${BACKDATE_LIMIT_DAYS}일 전까지 정할 수 있어요.`,
       })
     }
     if (values.endedAt === '') return
     if (!isCompleteDate(values.endedAt)) {
-      ctx.addIssue({ code: 'custom', path: ['endedAt'], message: '종료일을 끝까지 입력해 주세요.' })
+      ctx.addIssue({ code: 'custom', path: ['endedAt'], message: '종료일을 정확히 입력해 주세요.' })
     } else if (values.endedAt < values.startedAt) {
       ctx.addIssue({
         code: 'custom',
         path: ['endedAt'],
-        message: '종료일은 시작일보다 빠를 수 없어요.',
+        message: '종료일은 시작일과 같거나 그 이후여야 해요.',
       })
     } else if (daysBetween(values.startedAt, values.endedAt) >= PERIOD_LIMIT_DAYS) {
       ctx.addIssue({
         code: 'custom',
         path: ['endedAt'],
-        message: `종료일은 시작일 포함 ${PERIOD_LIMIT_DAYS}일 이내여야 해요.`,
+        message: `기간은 시작일부터 최대 ${PERIOD_LIMIT_DAYS}일까지 정할 수 있어요.`,
       })
     }
   })

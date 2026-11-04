@@ -111,8 +111,8 @@ describe('RoutinesPage', () => {
       'aria-pressed',
       'true'
     )
-    expect(screen.getByRole('button', { name: '완료됨 1' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '중단됨 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '완료 1' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '중단 1' })).toBeInTheDocument()
   })
 
   it('챌린지 루틴에만 챌린지 배지가 붙는다', async () => {
@@ -129,7 +129,7 @@ describe('RoutinesPage', () => {
     renderPage()
     const user = userEvent.setup()
 
-    await user.click(await screen.findByRole('button', { name: '완료됨 1' }))
+    await user.click(await screen.findByRole('button', { name: '완료 1' }))
 
     const card = screen.getByRole('link', { name: /여름 수영/ })
     expect(within(card).getByText('5월 1일 ~ 7월 31일')).toBeInTheDocument()
@@ -140,9 +140,9 @@ describe('RoutinesPage', () => {
     mockedGetMyRoutines.mockResolvedValue([])
     renderPage()
 
-    expect(await screen.findByText('아직 시작한 루틴이 없어요')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '+ 루틴 시작하기' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: '템플릿에서 시작' })).toBeInTheDocument()
+    expect(await screen.findByText('아직 루틴이 없어요')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: '+ 첫 루틴 만들기' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '템플릿 보기' })).toBeInTheDocument()
   })
 
   it('필터 결과가 0이면 그 탭이 모으는 것을 알려 주고, 완료됨엔 생성 CTA가 없다', async () => {
@@ -150,8 +150,8 @@ describe('RoutinesPage', () => {
     renderPage('/routines?status=completed')
 
     expect(await screen.findByText('아직 완주한 루틴이 없어요')).toBeInTheDocument()
-    expect(screen.queryByText('아직 시작한 루틴이 없어요')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: '+ 루틴 시작하기' })).not.toBeInTheDocument()
+    expect(screen.queryByText('아직 루틴이 없어요')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: '+ 새 루틴 만들기' })).not.toBeInTheDocument()
   })
 
   it('목록을 못 받으면 에러와 다시 시도를 보여 준다', async () => {
@@ -176,7 +176,7 @@ describe('RoutinesPage', () => {
     renderPage()
 
     await screen.findByRole('link', { name: /자기 전 독서/ })
-    expect(screen.queryByText(/개 저장됨/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/저장된 템플릿/)).not.toBeInTheDocument()
   })
 
   it('템플릿 탭 — 삭제 확인 문구를 보여 주고, 지우면 목록을 다시 받는다', async () => {
@@ -187,7 +187,7 @@ describe('RoutinesPage', () => {
     await user.click(await screen.findByRole('button', { name: '물 2L 템플릿 삭제' }))
     const dialog = screen.getByRole('dialog')
     expect(
-      within(dialog).getByText('템플릿만 삭제됩니다. 이 템플릿으로 시작한 루틴은 그대로 유지돼요.')
+      within(dialog).getByText('템플릿만 삭제되고, 이 템플릿으로 시작한 루틴은 그대로 남아요.')
     ).toBeInTheDocument()
 
     mockedGetTemplates.mockResolvedValue([])
@@ -207,7 +207,7 @@ describe('RoutinesPage', () => {
     const dialog = screen.getByRole('dialog')
     expect(
       within(dialog).getByText(
-        '진행 중인 루틴에는 적용되지 않습니다. 다음에 시작하는 루틴부터 반영돼요.'
+        '바꾼 내용은 다음에 시작하는 루틴부터 적용돼요. 이미 진행 중인 루틴은 바뀌지 않아요.'
       )
     ).toBeInTheDocument()
 
@@ -234,6 +234,8 @@ describe('RoutinesPage', () => {
     await user.click(await screen.findByRole('button', { name: '물 2L 템플릿 삭제' }))
     await user.click(within(screen.getByRole('dialog')).getByRole('button', { name: '삭제' }))
 
-    expect(await screen.findByText('삭제하지 못했어요. 다시 시도해 주세요.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('삭제하지 못했어요. 잠시 후 다시 시도해 주세요.')
+    ).toBeInTheDocument()
   })
 })

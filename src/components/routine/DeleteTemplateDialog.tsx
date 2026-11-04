@@ -37,10 +37,8 @@ const DeleteTemplateDialog = ({ template, onClose }: DeleteTemplateDialogProps) 
           ‘{template.title}’ 템플릿을 삭제할까요?
         </h2>
         {/* 없으면 "루틴도 지워질까 봐" 못 지운다. MVP는 시작 횟수가 없어 개수를 쓰지 않는다 */}
-        <p className={styles.body}>
-          템플릿만 삭제됩니다. 이 템플릿으로 시작한 루틴은 그대로 유지돼요.
-        </p>
-        {isError && <p className={styles.error}>삭제하지 못했어요. 다시 시도해 주세요.</p>}
+        <p className={styles.body}>템플릿만 삭제되고, 이 템플릿으로 시작한 루틴은 그대로 남아요.</p>
+        {isError && <p className={styles.error}>삭제하지 못했어요. 잠시 후 다시 시도해 주세요.</p>}
         <div className={styles.actions}>
           <button
             type="button"

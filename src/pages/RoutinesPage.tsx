@@ -17,8 +17,8 @@ type Tab = 'routines' | 'templates'
 
 const FILTERS: { status: RoutineStatus; label: string }[] = [
   { status: 'ongoing', label: '진행 중' },
-  { status: 'completed', label: '완료됨' },
-  { status: 'stopped', label: '중단됨' },
+  { status: 'completed', label: '완료' },
+  { status: 'stopped', label: '중단' },
 ]
 
 // 필터 결과가 0일 때 — "아직 시작한 루틴이 없어요"를 여기 쓰면 거짓말이다. 완료됨 · 중단됨엔 생성 CTA를 두지 않는다
@@ -26,17 +26,17 @@ const FILTER_EMPTY: Record<RoutineStatus, { art: string; title: string; body: st
   ongoing: {
     art: '🗂',
     title: '진행 중인 루틴이 없어요',
-    body: '다른 탭에 끝났거나 중단한 루틴이 있어요.',
+    body: '완료하거나 중단한 루틴은 다른 필터에서 볼 수 있어요.',
   },
   completed: {
     art: '🎉',
     title: '아직 완주한 루틴이 없어요',
-    body: '종료일이 지난 루틴이 여기에 초록으로 모여요.',
+    body: '종료일까지 마친 루틴이 이곳에 모여요.',
   },
   stopped: {
     art: '🗂',
     title: '중단한 루틴이 없어요',
-    body: '중단한 루틴의 기록은 달력에 그대로 남아요.',
+    body: '루틴을 중단해도 그동안의 기록은 달력에 그대로 남아요.',
   },
 }
 
@@ -96,7 +96,7 @@ const RoutinesTab = ({ status, onStatusChange, onShowTemplates }: RoutinesTabPro
         <div className={styles.section}>
           {routinesQuery.isError ? (
             <ErrorState
-              message="루틴 목록을 불러오지 못했어요."
+              message="루틴을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
               onRetry={() => void routinesQuery.refetch()}
             />
           ) : (
@@ -113,18 +113,20 @@ const RoutinesTab = ({ status, onStatusChange, onShowTemplates }: RoutinesTabPro
         {strip}
         <div className={cn(shared.card, styles.empty, styles.section)}>
           <div className={styles.emptyArt}>🌱</div>
-          <h2 className={styles.emptyTitle}>아직 시작한 루틴이 없어요</h2>
-          <p className={styles.emptyBody}>저장한 템플릿에서 바로 시작할 수도 있어요.</p>
+          <h2 className={styles.emptyTitle}>아직 루틴이 없어요</h2>
+          <p className={styles.emptyBody}>
+            첫 루틴을 만들거나, 저장해 둔 템플릿으로 바로 시작해 보세요.
+          </p>
           <div className={styles.emptyActions}>
             <Link to="/routines/new" className={cn(shared.btn, shared.btnPrimary)}>
-              + 루틴 시작하기
+              + 첫 루틴 만들기
             </Link>
             <button
               type="button"
               className={cn(shared.btn, shared.btnOutline)}
               onClick={onShowTemplates}
             >
-              템플릿에서 시작
+              템플릿 보기
             </button>
           </div>
         </div>
@@ -181,7 +183,7 @@ const RoutinesTab = ({ status, onStatusChange, onShowTemplates }: RoutinesTabPro
           {status === 'ongoing' && (
             <div className={styles.emptyActions}>
               <Link to="/routines/new" className={cn(shared.btn, shared.btnPrimary)}>
-                + 루틴 시작하기
+                + 새 루틴 만들기
               </Link>
             </div>
           )}
@@ -203,7 +205,7 @@ const TemplatesTab = () => {
       <div className={styles.section}>
         {templatesQuery.isError ? (
           <ErrorState
-            message="템플릿 목록을 불러오지 못했어요."
+            message="템플릿을 불러오지 못했어요. 잠시 후 다시 시도해 주세요."
             onRetry={() => void templatesQuery.refetch()}
           />
         ) : (
@@ -218,9 +220,16 @@ const TemplatesTab = () => {
       <div className={cn(shared.card, styles.empty, styles.section)}>
         <div className={styles.emptyArt}>✦</div>
         <h2 className={styles.emptyTitle}>저장한 템플릿이 없어요</h2>
+        {/* 템플릿을 만드는 입구는 루틴 만들기 폼의 체크박스 하나뿐이다 — 어디서 만드는지 알려 준다 */}
         <p className={styles.emptyBody}>
-          자주 하는 루틴을 템플릿으로 저장해 두면 다시 시작하기 쉬워요
+          새 루틴을 만들 때 ‘템플릿으로도 저장’을 켜 두면, 다음부터 같은 설정으로 바로 시작할 수
+          있어요.
         </p>
+        <div className={styles.emptyActions}>
+          <Link to="/routines/new" className={cn(shared.btn, shared.btnPrimary)}>
+            + 새 루틴 만들기
+          </Link>
+        </div>
       </div>
     )
   }
@@ -239,9 +248,7 @@ const TemplatesTab = () => {
         ))}
       </div>
       <div className={styles.note}>
-        ✦ 템플릿은 <b>루틴을 만드는 도구</b>일 뿐이에요. 고치거나 지워도{' '}
-        <b>이미 진행 중인 루틴은 그대로</b>
-        입니다.
+        템플릿을 고치거나 지워도 <b>이미 진행 중인 루틴에는 영향이 없어요.</b>
       </div>
       {deleting && <DeleteTemplateDialog template={deleting} onClose={() => setDeleting(null)} />}
       {editing && <EditTemplateDialog template={editing} onClose={() => setEditing(null)} />}
@@ -265,10 +272,12 @@ export default function RoutinesPage() {
         <div className={styles.heading}>
           <div>
             <h1 className={styles.title}>내 루틴</h1>
-            <p className={styles.subtitle}>지금 돌아가는 것과, 다시 시작할 수 있는 것.</p>
+            <p className={styles.subtitle}>
+              진행 중인 루틴과 저장해 둔 템플릿을 한곳에서 관리해요.
+            </p>
           </div>
           <Link to="/routines/new" className={cn(shared.btn, shared.btnPrimary)}>
-            + 루틴 시작
+            + 새 루틴
           </Link>
         </div>
 

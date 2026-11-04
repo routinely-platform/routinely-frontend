@@ -16,10 +16,13 @@ import shared from './routine.module.css'
 import styles from './RoutineForm.module.css'
 
 const SCHEDULE_META: Record<ScheduleType, { label: string; hint: string }> = {
-  DAILY: { label: '매일', hint: '안 하면 미완료로 남아요' },
-  SPECIFIC_DAYS: { label: '요일 지정', hint: '고른 요일에만 떠요' },
-  WEEKLY_COUNT: { label: '주 N회', hint: '요일은 자유, 횟수만 채우면 돼요' },
-  MONTHLY_COUNT: { label: '월 N회', hint: '한 달 안에 N번, 날짜는 자유예요' },
+  DAILY: { label: '매일', hint: '매일 인증하는 루틴이에요. 하루를 놓치면 미완료로 남아요.' },
+  SPECIFIC_DAYS: {
+    label: '요일 지정',
+    hint: '고른 요일에만 인증해요. 그날을 놓치면 미완료로 남아요.',
+  },
+  WEEKLY_COUNT: { label: '주 N회', hint: '요일과 상관없이 한 주에 정한 횟수만 채우면 돼요.' },
+  MONTHLY_COUNT: { label: '월 N회', hint: '날짜와 상관없이 한 달에 정한 횟수만 채우면 돼요.' },
 }
 
 const WEEKDAY_LABELS: Record<Weekday, string> = {
@@ -34,8 +37,8 @@ const WEEKDAY_LABELS: Record<Weekday, string> = {
 
 const SCHEDULE_TOOLTIP = (
   <>
-    <b>매일·요일 지정</b>은 그 날 안 하면 미완료로 남아요. <b>주 N회·월 N회</b>는 그 기간 안에
-    횟수만 채우면 되고, 특정일 미완료가 없어요.
+    <b>매일 · 요일 지정</b>은 정해진 날에 인증하지 않으면 미완료로 남아요. <b>주 N회 · 월 N회</b>는
+    기간 안에 횟수만 채우면 되고, 하루를 놓쳐도 미완료가 되지 않아요.
   </>
 )
 
@@ -133,7 +136,8 @@ const ScheduleDetail = () => {
           </div>
           {/* 31로 두면 2월에 물리적으로 채울 수 없는 목표가 된다 */}
           <p className={styles.hint}>
-            1~{MONTHLY_COUNT_MAX}회. 달마다 날 수가 달라 28일을 기준으로 둡니다
+            1~{MONTHLY_COUNT_MAX}회까지 정할 수 있어요. 2월에도 채울 수 있도록 {MONTHLY_COUNT_MAX}
+            회가 최대예요.
           </p>
           <FieldError name="monthlyCount" />
         </>
@@ -169,7 +173,7 @@ const DefinitionFields = () => {
           className={cn(styles.input, styles.titleInput)}
           maxLength={100}
           autoComplete="off"
-          placeholder="예: 아침 러닝"
+          placeholder="예: 아침 30분 러닝"
           {...register('title')}
         />
         <FieldError name="title" />
@@ -196,7 +200,7 @@ const DefinitionFields = () => {
       <div className={styles.field}>
         <span id={scheduleLabelId} className={styles.label}>
           반복 주기
-          <Tooltip content={SCHEDULE_TOOLTIP} label="주기마다 무엇이 다른가요" />
+          <Tooltip content={SCHEDULE_TOOLTIP} label="주기별 차이" />
         </span>
         <Controller
           control={control}

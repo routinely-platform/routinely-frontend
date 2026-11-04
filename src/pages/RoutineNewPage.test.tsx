@@ -106,9 +106,9 @@ describe('RoutineNewPage', () => {
     await user.click(screen.getByRole('button', { name: '요일 지정' }))
     await user.click(screen.getByRole('button', { name: '금' }))
     await user.click(screen.getByRole('button', { name: '월' }))
-    expect(screen.queryByRole('button', { name: '연결 끊기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '처음부터 만들기' })).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+    await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
     expect(mockedStart).toHaveBeenCalledWith({
       title: '물 2L',
@@ -125,10 +125,10 @@ describe('RoutineNewPage', () => {
   it('필수 값이 비면 보내지 않고 알린다', async () => {
     const user = renderPage()
 
-    await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+    await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
     expect(await screen.findByText('루틴 이름을 입력해 주세요.')).toBeInTheDocument()
-    expect(screen.getByText('카테고리를 골라 주세요.')).toBeInTheDocument()
+    expect(screen.getByText('카테고리를 선택해 주세요.')).toBeInTheDocument()
     expect(mockedStart).not.toHaveBeenCalled()
   })
 
@@ -137,11 +137,11 @@ describe('RoutineNewPage', () => {
       const user = renderPage('/routines/new?templateId=7')
 
       expect(await screen.findByDisplayValue('아침 러닝')).toBeInTheDocument()
-      expect(screen.getByText(/여기서 고쳐도 템플릿은 그대로예요/)).toBeInTheDocument()
+      expect(screen.getByText(/여기서 바꿔도 템플릿은 그대로예요/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: '3회' })).toHaveAttribute('aria-pressed', 'true')
       expect(screen.getByRole('checkbox', { name: /템플릿으로도 저장/ })).toBeDisabled()
 
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
       expect(mockedStart).toHaveBeenCalledWith({
         routineTemplateId: 7,
@@ -156,11 +156,11 @@ describe('RoutineNewPage', () => {
       await user.click(await screen.findByRole('button', { name: '4회' }))
 
       expect(
-        screen.getByText('값을 고쳤어요. 이 루틴은 템플릿과 따로 기록됩니다.')
+        screen.getByText('설정을 바꿨어요. 이 루틴은 템플릿과 연결되지 않고 따로 기록돼요.')
       ).toBeInTheDocument()
       expect(screen.getByRole('checkbox', { name: /템플릿으로도 저장/ })).toBeEnabled()
 
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
       const body = mockedStart.mock.calls[0][0]
       expect(body).not.toHaveProperty('routineTemplateId')
@@ -173,8 +173,8 @@ describe('RoutineNewPage', () => {
       await user.click(await screen.findByRole('button', { name: '4회' }))
       await user.click(screen.getByRole('button', { name: '3회' }))
 
-      expect(screen.getByText(/여기서 고쳐도 템플릿은 그대로예요/)).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      expect(screen.getByText(/여기서 바꿔도 템플릿은 그대로예요/)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
       expect(mockedStart).toHaveBeenCalledWith({
         routineTemplateId: 7,
         startedAt: TODAY,
@@ -185,17 +185,17 @@ describe('RoutineNewPage', () => {
     it('연결 끊기 — 폼을 비운다', async () => {
       const user = renderPage('/routines/new?templateId=7')
 
-      await user.click(await screen.findByRole('button', { name: '연결 끊기' }))
+      await user.click(await screen.findByRole('button', { name: '처음부터 만들기' }))
 
       expect(titleInput()).toHaveValue('')
-      expect(screen.queryByRole('button', { name: '연결 끊기' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: '처음부터 만들기' })).not.toBeInTheDocument()
       expect(screen.getByTestId('location')).toHaveTextContent(/^\/routines\/new$/)
     })
 
     it('없는 템플릿이면 알리고 빈 폼으로 보낸다', async () => {
       const user = renderPage('/routines/new?templateId=99')
 
-      await user.click(await screen.findByRole('button', { name: '빈 폼으로 시작' }))
+      await user.click(await screen.findByRole('button', { name: '처음부터 만들기' }))
 
       expect(titleInput()).toHaveValue('')
     })
@@ -213,7 +213,7 @@ describe('RoutineNewPage', () => {
       const user = renderPage()
       await fillAndCheck(user)
 
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
       expect(mockedCreateTemplate).toHaveBeenCalledWith({
         title: '물 2L',
@@ -235,12 +235,12 @@ describe('RoutineNewPage', () => {
       const user = renderPage()
       await fillAndCheck(user)
 
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
       expect(
-        await screen.findByText('템플릿은 저장됐어요. 루틴 시작은 실패했어요 — 다시 시작해 주세요.')
+        await screen.findByText('템플릿은 저장했지만 루틴을 시작하지 못했어요. 다시 시도해 주세요.')
       ).toBeInTheDocument()
 
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
       expect(mockedCreateTemplate).toHaveBeenCalledTimes(1)
       expect(mockedStart).toHaveBeenCalledTimes(2)
@@ -270,9 +270,9 @@ describe('RoutineNewPage', () => {
       expect(count).toHaveValue(10)
       await user.clear(count)
       await user.type(count, '29')
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
-      expect(await screen.findByText('1~28회 사이로 입력해 주세요.')).toBeInTheDocument()
+      expect(await screen.findByText('횟수는 1~28회 사이로 입력해 주세요.')).toBeInTheDocument()
       expect(mockedStart).not.toHaveBeenCalled()
     })
   })
@@ -283,12 +283,12 @@ describe('RoutineNewPage', () => {
 
       setDate(startInput(), '2026-09-03')
       expect(
-        screen.getByText('2026-09-03부터 시작하면 아직 인증하지 않은 62일이 미완료로 표시됩니다.')
+        screen.getByText('9월 3일부터 시작하면 지난 62일이 미완료로 기록돼요.')
       ).toBeInTheDocument()
 
       await user.click(screen.getByRole('button', { name: '주 N회' }))
       expect(
-        screen.getByText('2026-09-03부터 시작하면 지난 9주치 목표가 미달성으로 계산됩니다.')
+        screen.getByText('9월 3일부터 시작하면 지난 9주는 목표 미달성으로 기록돼요.')
       ).toBeInTheDocument()
     })
 
@@ -297,7 +297,7 @@ describe('RoutineNewPage', () => {
 
       setDate(startInput(), '2026-11-10')
 
-      expect(screen.queryByText(/미완료로 표시됩니다/)).not.toBeInTheDocument()
+      expect(screen.queryByText(/미완료로 기록돼요/)).not.toBeInTheDocument()
     })
 
     it('90일보다 앞 · 종료일이 시작일보다 앞 · 366일 초과를 막는다', async () => {
@@ -307,16 +307,18 @@ describe('RoutineNewPage', () => {
 
       setDate(startInput(), '2026-08-05')
       setDate(endInput(), '2026-08-01')
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
-      expect(await screen.findByText('시작일은 90일 전까지 고를 수 있어요.')).toBeInTheDocument()
-      expect(screen.getByText('종료일은 시작일보다 빠를 수 없어요.')).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
+      expect(
+        await screen.findByText('시작일은 오늘부터 최대 90일 전까지 정할 수 있어요.')
+      ).toBeInTheDocument()
+      expect(screen.getByText('종료일은 시작일과 같거나 그 이후여야 해요.')).toBeInTheDocument()
 
       setDate(startInput(), '2026-11-04')
       // 시작일 포함 367일째 — 366일째(2027-11-04)까지 된다
       setDate(endInput(), '2027-11-05')
-      await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
       expect(
-        await screen.findByText('종료일은 시작일 포함 366일 이내여야 해요.')
+        await screen.findByText('기간은 시작일부터 최대 366일까지 정할 수 있어요.')
       ).toBeInTheDocument()
       expect(mockedStart).not.toHaveBeenCalled()
     })
@@ -348,10 +350,12 @@ describe('RoutineNewPage', () => {
     const user = renderPage()
 
     await user.type(titleInput(), '자기 전 독서')
-    expect(await screen.findByText('‘자기 전 독서’가 이미 진행 중이에요.')).toBeInTheDocument()
+    expect(
+      await screen.findByText('이미 진행 중인 ‘자기 전 독서’ 루틴이 있어요.')
+    ).toBeInTheDocument()
 
     await user.click(await screen.findByRole('button', { name: '📚 독서' }))
-    await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+    await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
     expect(mockedStart).toHaveBeenCalled()
   })
@@ -364,7 +368,7 @@ describe('RoutineNewPage', () => {
     await user.type(titleInput(), '수영')
     await user.click(await screen.findByRole('button', { name: '🏃 운동' }))
 
-    await user.click(screen.getByRole('button', { name: '루틴 시작' }))
+    await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
 
     expect(await screen.findByText('시작일은 오늘부터 90일 전까지여야 합니다.')).toBeInTheDocument()
     expect(titleInput()).toHaveValue('수영')

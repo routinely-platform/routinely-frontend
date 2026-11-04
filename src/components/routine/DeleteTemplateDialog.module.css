@@ -12,15 +12,15 @@
 .dialog {
   width: 100%;
   max-width: 420px;
-  padding: 24px;
+  padding: 28px;
   border-radius: 16px;
   background: var(--surface);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
 }
 
 .title {
-  margin: 0 0 8px;
-  font-size: 18px;
+  margin: 0 0 10px;
+  font-size: 21px;
   font-weight: 800;
   color: var(--text);
   overflow-wrap: anywhere;
@@ -28,14 +28,14 @@
 
 .body {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15.5px;
+  line-height: 1.6;
   color: var(--text-muted);
 }
 
 .error {
   margin: 12px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--danger);
 }

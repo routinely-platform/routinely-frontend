@@ -14,20 +14,20 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .title {
   margin: 0;
-  font-size: 34px;
+  font-size: 38px;
   font-weight: 800;
   letter-spacing: -0.025em;
   color: var(--text);
 }
 
 .subtitle {
-  margin: 6px 0 0;
-  font-size: 14px;
+  margin: 8px 0 0;
+  font-size: 16px;
   color: var(--text-muted);
 }
 
@@ -42,13 +42,13 @@
 }
 
 .tab {
-  padding: 8px 18px;
+  padding: 10px 24px;
   border: none;
   border-radius: 999px;
   background: transparent;
   color: var(--text-muted);
   font: inherit;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   cursor: pointer;
 }
@@ -60,11 +60,11 @@
 }
 
 .section {
-  margin-top: 18px;
+  margin-top: 20px;
 }
 
 .filters {
-  margin: 18px 0 16px;
+  margin: 22px 0 18px;
 }
 
 .state {
@@ -93,30 +93,31 @@
 
 .stateText {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 
 .empty {
-  padding: 52px 24px;
+  padding: 60px 24px;
   text-align: center;
 }
 
 .emptyArt {
-  margin-bottom: 12px;
-  font-size: 44px;
+  margin-bottom: 14px;
+  font-size: 52px;
 }
 
 .emptyTitle {
-  margin: 0 0 6px;
-  font-size: 17px;
+  margin: 0 0 8px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--text);
 }
 
 .emptyBody {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
+  line-height: 1.55;
   color: var(--text-muted);
 }
 
@@ -125,16 +126,16 @@
   justify-content: center;
   gap: 9px;
   flex-wrap: wrap;
-  margin-top: 16px;
+  margin-top: 20px;
 }
 
 .note {
-  margin-top: 18px;
-  padding: 12px 14px;
+  margin-top: 20px;
+  padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface-2);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--text-muted);
 }
 

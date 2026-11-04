@@ -14,8 +14,8 @@ interface RoutineCardProps {
 
 const STATUS_META: Record<RoutineStatus, { label: string; className: string }> = {
   ongoing: { label: '진행 중', className: shared.badgeOngoing },
-  completed: { label: '🎉 완료됨', className: shared.badgeCompleted },
-  stopped: { label: '중단됨', className: shared.badgeStopped },
+  completed: { label: '🎉 완료', className: shared.badgeCompleted },
+  stopped: { label: '중단', className: shared.badgeStopped },
 }
 
 // 달성률 · 스트릭 · 빈도형 진척은 응답에 없어 그리지 않는다 — 자리도 비워 두지 않는다 (#19 MVP 범위, 백엔드 #60 짝 작업)

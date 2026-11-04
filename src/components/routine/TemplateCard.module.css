@@ -1,18 +1,18 @@
 .card {
   display: flex;
   flex-direction: column;
-  padding: 17px;
+  padding: 22px;
 }
 
 .head {
   display: flex;
   align-items: flex-start;
-  gap: 11px;
-  margin-bottom: 14px;
+  gap: 12px;
+  margin-bottom: 18px;
 }
 
 .emoji {
-  font-size: 25px;
+  font-size: 30px;
   line-height: 1;
 }
 
@@ -22,15 +22,17 @@
 }
 
 .title {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
+  line-height: 1.35;
   color: var(--text);
   overflow-wrap: anywhere;
 }
 
 .meta {
-  font-size: 12.5px;
-  color: var(--text-dim);
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--text-muted);
 }
 
 .actions {

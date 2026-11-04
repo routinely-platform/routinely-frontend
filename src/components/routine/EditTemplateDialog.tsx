@@ -61,7 +61,7 @@ const EditTemplateDialog = ({ template, onClose }: EditTemplateDialogProps) => {
         </h2>
         {/* 없으면 "고쳤는데 왜 안 바뀌지?"가 된다 — 루틴은 시작할 때 정의를 복사해 간다(ADR-0040) */}
         <p className={dialogStyles.body}>
-          진행 중인 루틴에는 적용되지 않습니다. 다음에 시작하는 루틴부터 반영돼요.
+          바꾼 내용은 다음에 시작하는 루틴부터 적용돼요. 이미 진행 중인 루틴은 바뀌지 않아요.
         </p>
         <FormProvider {...methods}>
           <form
@@ -72,7 +72,8 @@ const EditTemplateDialog = ({ template, onClose }: EditTemplateDialogProps) => {
             <DefinitionFields />
             {error && (
               <p className={styles.error} role="alert">
-                {getApiErrorPayload(error)?.message || '수정하지 못했어요. 다시 시도해 주세요.'}
+                {getApiErrorPayload(error)?.message ||
+                  '저장하지 못했어요. 잠시 후 다시 시도해 주세요.'}
               </p>
             )}
             <div className={dialogStyles.actions}>
