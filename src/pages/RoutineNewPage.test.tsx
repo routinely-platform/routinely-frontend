@@ -152,18 +152,58 @@ describe('RoutineNewPage', () => {
       expect(plainEnter.defaultPrevented).toBe(false)
     })
 
-    it('작성 중 원본 템플릿이 지워져 다시 조회돼도 폼과 입력값이 남는다', async () => {
+    // 배경 재조회(창 포커스 등)를 흉내 낸다. refetch가 끝나도 구독 알림 · 재렌더는 뒤에 오므로 한 틱 더 기다린다
+    const refetchTemplatesWith = async (next: RoutineTemplate[]) => {
+      vi.mocked(getRoutineTemplates).mockResolvedValue(next)
+      await act(async () => {
+        await queryClient.refetchQueries()
+        await new Promise((resolve) => setTimeout(resolve, 20))
+      })
+    }
+
+    // 아래 셋은 제출 바디로 단언한다 — 재조회 결과가 폼까지 도달해야만 통과하므로, 재렌더 전에 단언해 공짜로 통과할 수 없다
+    it('작성 중 원본 템플릿이 지워져도 폼과 입력값이 남고, 고친 정의로 만든다', async () => {
       const user = renderPage('/routines/new?templateId=7')
       const title = await screen.findByDisplayValue('아침 러닝')
       await user.type(title, ' 5km')
 
-      vi.mocked(getRoutineTemplates).mockClear().mockResolvedValue([])
-      await act(() => queryClient.refetchQueries())
+      await refetchTemplatesWith([])
 
-      expect(vi.mocked(getRoutineTemplates)).toHaveBeenCalledTimes(1)
       expect(screen.queryByText(/템플릿을 찾을 수 없어요/)).not.toBeInTheDocument()
       expect(titleInput()).toBe(title)
       expect(title).toHaveValue('아침 러닝 5km')
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
+      expect(mockedStart.mock.calls[0][0]).toMatchObject({ title: '아침 러닝 5km', targetCount: 3 })
+    })
+
+    it('안 고친 채로 원본이 지워졌으면 지워진 ID 대신 화면의 정의를 보낸다', async () => {
+      const user = renderPage('/routines/new?templateId=7')
+      await screen.findByDisplayValue('아침 러닝')
+
+      await refetchTemplatesWith([])
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
+
+      const body = mockedStart.mock.calls[0][0]
+      expect(body).not.toHaveProperty('routineTemplateId')
+      expect(body).toMatchObject({
+        title: '아침 러닝',
+        scheduleType: 'WEEKLY_COUNT',
+        targetCount: 3,
+      })
+    })
+
+    it('작성 중 원본이 다른 곳에서 고쳐졌으면 ID 대신 화면의 정의를 보낸다 — 서버가 다른 정의를 복사하지 않게', async () => {
+      const user = renderPage('/routines/new?templateId=7')
+      await screen.findByDisplayValue('아침 러닝')
+
+      await refetchTemplatesWith([{ ...TEMPLATE, targetCount: 5 }])
+
+      // 화면은 처음 불러온 값 그대로다
+      expect(screen.getByRole('button', { name: '3회' })).toHaveAttribute('aria-pressed', 'true')
+      await user.click(screen.getByRole('button', { name: '루틴 만들기' }))
+      const body = mockedStart.mock.calls[0][0]
+      expect(body).not.toHaveProperty('routineTemplateId')
+      expect(body).toMatchObject({ scheduleType: 'WEEKLY_COUNT', targetCount: 3 })
     })
 
     it('프리필하고, 안 고쳤으면 템플릿 ID만 보낸다 · 템플릿으로도 저장은 꺼져 있다', async () => {

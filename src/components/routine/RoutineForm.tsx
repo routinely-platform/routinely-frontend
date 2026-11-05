@@ -29,8 +29,13 @@ import shared from './routine.module.css'
 import styles from './RoutineForm.module.css'
 
 interface RoutineFormProps {
-  /** 템플릿에서 시작했으면 그 템플릿 — 없으면 빈 폼 */
+  /** 템플릿에서 시작했으면 프리필한 그 템플릿 — 없으면 빈 폼. 화면(기본값 · 출처 배지)의 기준이다 */
   template?: RoutineTemplate
+  /**
+   * 서버의 최신 템플릿 — 제출 판정의 기준이다. 작성 중 다른 곳에서 고쳐졌을 수 있고, 지워졌으면 null.
+   * 템플릿 ID만 보내면 서버는 이 최신 정의를 복사한다
+   */
+  latestTemplate?: RoutineTemplate | null
   /** 출처 배지의 "연결 끊기" — 폼을 비운다 */
   onDisconnect: () => void
 }
@@ -50,7 +55,10 @@ const useEditedFromTemplate = (template: RoutineTemplate | undefined) => {
 }
 
 /** 어디서 왔는지 — 프리필된 값의 출처를 모르면 지우기가 무섭다 */
-const SourceBadge = ({ template, onDisconnect }: Required<RoutineFormProps>) => {
+const SourceBadge = ({
+  template,
+  onDisconnect,
+}: Required<Pick<RoutineFormProps, 'template' | 'onDisconnect'>>) => {
   const edited = useEditedFromTemplate(template)
 
   return (
@@ -163,7 +171,7 @@ const SaveAsTemplateField = ({ template }: { template?: RoutineTemplate }) => {
 const DEFAULT_ERROR = '루틴을 만들지 못했어요. 잠시 후 다시 시도해 주세요.'
 const PARTIAL_ERROR = '템플릿은 저장했지만 루틴을 시작하지 못했어요. 다시 시도해 주세요.'
 
-const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
+const RoutineForm = ({ template, latestTemplate, onDisconnect }: RoutineFormProps) => {
   const navigate = useNavigate()
   const startedAtId = useId()
   const endedAtId = useId()
@@ -195,12 +203,14 @@ const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
     setSubmitError(null)
     const period = { startedAt: values.startedAt, endedAt: values.endedAt || null }
     const definition = toDefinitionRequest(values)
-    const edited = template ? isDefinitionEdited(values, template) : true
+    // 화면 값이 서버의 최신 템플릿과 같을 때만 ID를 보낸다 — 서버가 복사할 정의가 화면과 같아진다.
+    // 작성 중 원본이 고쳐졌거나 지워졌으면 정의를 직접 보낸다(연결은 끊긴다 — 고쳤을 때와 같은 규칙)
+    const reuseTemplate = latestTemplate && !isDefinitionEdited(values, latestTemplate)
 
     try {
-      if (template && !edited) {
-        // 안 고쳤으면 템플릿 ID만 — 정의를 함께 보내면 400 (#19 G1)
-        await startRoutine({ routineTemplateId: template.templateId, ...period })
+      if (reuseTemplate) {
+        // 템플릿 ID만 — 정의를 함께 보내면 400 (#19 G1)
+        await startRoutine({ routineTemplateId: latestTemplate.templateId, ...period })
       } else if (values.saveAsTemplate) {
         // 시작 API에 저장 옵션이 없다 — ① 템플릿 생성 → ② 받은 ID로 시작 (#19 G2)
         const definitionKey = JSON.stringify(definition)

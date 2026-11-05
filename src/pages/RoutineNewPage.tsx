@@ -26,13 +26,20 @@ export default function RoutineNewPage() {
   const found = templatesQuery.data?.find((t) => t.templateId === templateId)
   if (found && found.templateId !== heldTemplate?.templateId) setHeldTemplate(found)
   const template = heldTemplate?.templateId === templateId ? heldTemplate : found
+  // 제출 판정은 최신 응답 기준 — 지워졌으면 null. 목록이 아직 없으면(받기 전) 붙잡아 둔 것을 쓴다
+  const latestTemplate = templatesQuery.data ? (found ?? null) : template
 
   let content
   if (templateId === null) {
     content = <RoutineForm key="blank" onDisconnect={disconnect} />
   } else if (template) {
     content = (
-      <RoutineForm key={template.templateId} template={template} onDisconnect={disconnect} />
+      <RoutineForm
+        key={template.templateId}
+        template={template}
+        latestTemplate={latestTemplate}
+        onDisconnect={disconnect}
+      />
     )
   } else if (!templatesQuery.data) {
     // 프리필할 값이 오기 전에는 폼을 그리지 않는다 — 다 친 뒤에 값이 덮이면 안 된다
