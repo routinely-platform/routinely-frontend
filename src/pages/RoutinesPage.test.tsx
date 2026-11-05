@@ -198,6 +198,40 @@ describe('RoutinesPage', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
+  it('템플릿 수정 대화상자 — 포커스를 안으로 옮기고 가두며, 닫으면 수정 버튼으로 돌려준다', async () => {
+    renderPage('/routines?tab=templates')
+    const user = userEvent.setup()
+
+    const editButton = await screen.findByRole('button', { name: '물 2L 템플릿 수정' })
+    await user.click(editButton)
+    const dialog = screen.getByRole('dialog')
+    expect(dialog).toHaveFocus()
+
+    // 배경의 '이 템플릿으로 시작' 링크로 빠지지 않고 마지막 버튼으로 돈다
+    await user.tab({ shift: true })
+    expect(within(dialog).getByRole('button', { name: '저장' })).toHaveFocus()
+    await user.tab()
+    expect(dialog.contains(document.activeElement)).toBe(true)
+
+    await user.click(within(dialog).getByRole('button', { name: '취소' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(editButton).toHaveFocus()
+  })
+
+  it('템플릿 삭제 대화상자도 포커스를 가둔다', async () => {
+    renderPage('/routines?tab=templates')
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole('button', { name: '물 2L 템플릿 삭제' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('button', { name: '취소' })).toHaveFocus()
+
+    await user.tab({ shift: true })
+    expect(within(dialog).getByRole('button', { name: '삭제' })).toHaveFocus()
+    await user.tab()
+    expect(within(dialog).getByRole('button', { name: '취소' })).toHaveFocus()
+  })
+
   it('템플릿 수정 — 안내 문구를 보여 주고, 정의 5필드를 보낸다', async () => {
     mockedUpdateTemplate.mockResolvedValue({ ...TEMPLATE, title: '물 3L' })
     renderPage('/routines?tab=templates')

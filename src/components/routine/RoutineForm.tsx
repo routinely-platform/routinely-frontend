@@ -6,6 +6,7 @@ import { getApiErrorPayload } from '@/components/auth/authFormErrors'
 import { useCreateRoutineTemplate, useMyRoutines, useStartRoutine } from '@/hooks/useRoutines'
 import type { RoutineTemplate } from '@/types/routine'
 import { cn } from '@/utils/cn'
+import { preventComposingSubmit } from '@/utils/ime'
 import {
   addDays,
   daysBetween,
@@ -227,7 +228,12 @@ const RoutineForm = ({ template, onDisconnect }: RoutineFormProps) => {
 
   return (
     <FormProvider {...methods}>
-      <form className={styles.fields} onSubmit={handleSubmit(onSubmit)} noValidate>
+      <form
+        className={styles.fields}
+        onSubmit={handleSubmit(onSubmit)}
+        onKeyDown={preventComposingSubmit}
+        noValidate
+      >
         {template && <SourceBadge template={template} onDisconnect={onDisconnect} />}
 
         <DefinitionFields />

@@ -2,10 +2,11 @@ import { useEffect, useId } from 'react'
 import { FormProvider, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getApiErrorPayload } from '@/components/auth/authFormErrors'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
 import { useUpdateRoutineTemplate } from '@/hooks/useRoutines'
 import type { RoutineTemplate } from '@/types/routine'
 import { cn } from '@/utils/cn'
-import { isComposingKeyEvent } from '@/utils/ime'
+import { isComposingKeyEvent, preventComposingSubmit } from '@/utils/ime'
 import DefinitionFields from './DefinitionFields'
 import {
   definitionDefaults,
@@ -24,6 +25,7 @@ interface EditTemplateDialogProps {
 
 const EditTemplateDialog = ({ template, onClose }: EditTemplateDialogProps) => {
   const titleId = useId()
+  const dialogRef = useDialogFocus<HTMLDivElement>()
   const { mutateAsync, isPending, error } = useUpdateRoutineTemplate()
   const methods = useForm<DefinitionFormValues>({
     resolver: zodResolver(definitionSchema),
@@ -51,9 +53,11 @@ const EditTemplateDialog = ({ template, onClose }: EditTemplateDialogProps) => {
   return (
     <div className={dialogStyles.backdrop}>
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className={cn(dialogStyles.dialog, dialogStyles.wide)}
       >
         <h2 id={titleId} className={dialogStyles.title}>
@@ -67,6 +71,7 @@ const EditTemplateDialog = ({ template, onClose }: EditTemplateDialogProps) => {
           <form
             className={cn(styles.fields, dialogStyles.form)}
             onSubmit={methods.handleSubmit(onSubmit)}
+            onKeyDown={preventComposingSubmit}
             noValidate
           >
             <DefinitionFields />

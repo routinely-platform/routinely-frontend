@@ -57,6 +57,11 @@
   overflow-y: auto;
 }
 
+/* 포커스를 받는 대화상자 자체에는 테두리를 그리지 않는다 — 안쪽 요소가 키보드 포커스를 보여 준다 */
+.dialog:focus {
+  outline: none;
+}
+
 .form {
   margin-top: 18px;
 }

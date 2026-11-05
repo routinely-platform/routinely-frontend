@@ -1,4 +1,5 @@
 import { useEffect, useId } from 'react'
+import { useDialogFocus } from '@/hooks/useDialogFocus'
 import { useDeleteRoutineTemplate } from '@/hooks/useRoutines'
 import type { RoutineTemplate } from '@/types/routine'
 import { cn } from '@/utils/cn'
@@ -13,6 +14,7 @@ interface DeleteTemplateDialogProps {
 
 const DeleteTemplateDialog = ({ template, onClose }: DeleteTemplateDialogProps) => {
   const titleId = useId()
+  const dialogRef = useDialogFocus<HTMLDivElement>()
   const { mutate, isPending, isError } = useDeleteRoutineTemplate()
 
   useEffect(() => {
@@ -27,9 +29,11 @@ const DeleteTemplateDialog = ({ template, onClose }: DeleteTemplateDialogProps) 
   return (
     <div className={styles.backdrop} onClick={() => !isPending && onClose()}>
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
         className={styles.dialog}
         onClick={(e) => e.stopPropagation()}
       >

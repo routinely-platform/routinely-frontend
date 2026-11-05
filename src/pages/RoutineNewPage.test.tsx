@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, createEvent, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
@@ -12,6 +12,7 @@ import {
 } from '@/api/routine'
 import { apiError } from '@/test/axiosError'
 import type { Category, Routine, RoutineTemplate } from '@/types/routine'
+import { COMPOSITION_END_GRACE_MS } from '@/utils/ime'
 import RoutineNewPage from './RoutineNewPage'
 
 vi.mock('@/api/routine', () => ({
@@ -61,8 +62,10 @@ const LocationProbe = () => {
   return <div data-testid="location">{location.pathname + location.search}</div>
 }
 
+let queryClient: QueryClient
+
 const renderPage = (initialEntry = '/routines/new') => {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={[initialEntry]}>
@@ -133,6 +136,36 @@ describe('RoutineNewPage', () => {
   })
 
   describe('템플릿에서 시작 (#19 G1 · G2)', () => {
+    // macOS Chrome은 조합을 Enter로 확정하면 조합이 아닌 Enter를 한 번 더 보낸다 — 그 Enter가 폼을 제출하면 안 된다
+    it('조합을 확정한 Enter는 제출을 막고, 조합과 무관한 Enter는 막지 않는다', async () => {
+      renderPage('/routines/new?templateId=7')
+      const title = await screen.findByDisplayValue('아침 러닝')
+
+      fireEvent.compositionEnd(title, { data: '런' })
+      const composedEnter = createEvent.keyDown(title, { key: 'Enter' })
+      fireEvent(title, composedEnter)
+      expect(composedEnter.defaultPrevented).toBe(true)
+
+      await new Promise((resolve) => setTimeout(resolve, COMPOSITION_END_GRACE_MS + 20))
+      const plainEnter = createEvent.keyDown(title, { key: 'Enter' })
+      fireEvent(title, plainEnter)
+      expect(plainEnter.defaultPrevented).toBe(false)
+    })
+
+    it('작성 중 원본 템플릿이 지워져 다시 조회돼도 폼과 입력값이 남는다', async () => {
+      const user = renderPage('/routines/new?templateId=7')
+      const title = await screen.findByDisplayValue('아침 러닝')
+      await user.type(title, ' 5km')
+
+      vi.mocked(getRoutineTemplates).mockClear().mockResolvedValue([])
+      await act(() => queryClient.refetchQueries())
+
+      expect(vi.mocked(getRoutineTemplates)).toHaveBeenCalledTimes(1)
+      expect(screen.queryByText(/템플릿을 찾을 수 없어요/)).not.toBeInTheDocument()
+      expect(titleInput()).toBe(title)
+      expect(title).toHaveValue('아침 러닝 5km')
+    })
+
     it('프리필하고, 안 고쳤으면 템플릿 ID만 보낸다 · 템플릿으로도 저장은 꺼져 있다', async () => {
       const user = renderPage('/routines/new?templateId=7')
 
