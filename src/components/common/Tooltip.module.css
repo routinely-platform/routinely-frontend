@@ -39,14 +39,18 @@
   bottom: calc(100% + 9px);
   transform: translateX(-50%);
   width: max-content;
-  max-width: min(300px, 72vw);
-  padding: 11px 14px;
+  max-width: min(320px, 72vw);
+  padding: 12px 15px;
   background: var(--text);
   color: var(--surface);
   border-radius: 14px;
   box-shadow: var(--sh-3);
-  font: 400 12.5px/1.55 var(--font-sans);
+  font: 400 13.5px/1.6 var(--font-sans);
   text-align: left;
+  /* 트리거를 감싼 라벨이 nowrap이면 그대로 상속돼 본문이 줄바꿈되지 않고 상자 밖으로 넘친다 */
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: keep-all;
   letter-spacing: 0;
   text-transform: none;
   opacity: 0;

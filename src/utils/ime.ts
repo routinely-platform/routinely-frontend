@@ -38,3 +38,11 @@ export function isComposingKeyEvent(event: KeyboardEvent | ReactKeyboardEvent): 
     performance.now() - lastCompositionEndAt < COMPOSITION_END_GRACE_MS
   )
 }
+
+/**
+ * 폼의 onKeyDown에 건다 — 조합을 확정하는 Enter가 폼을 제출하지 않게 막는다.
+ * macOS Chrome은 조합을 Enter로 확정하면 조합이 아닌 Enter를 한 번 더 보내고, 그 Enter가 폼의 기본 제출을 일으킨다
+ */
+export function preventComposingSubmit(event: ReactKeyboardEvent) {
+  if (event.key === 'Enter' && isComposingKeyEvent(event)) event.preventDefault()
+}
