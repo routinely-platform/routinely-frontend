@@ -2,13 +2,15 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useState, type ReactElement } from 'react'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getCategories } from '@/api/category'
+import { getExecutions } from '@/api/execution'
 import { getMyRoutines, getRoutineTemplates } from '@/api/routine'
 import { getMyProfile } from '@/api/user'
 import LoginPage from '@/pages/LoginPage'
 import ProfilePage from '@/pages/ProfilePage'
+import RoutineDetailPage from '@/pages/RoutineDetailPage'
 import RoutineNewPage from '@/pages/RoutineNewPage'
 import RoutinesPage from '@/pages/RoutinesPage'
 import SignupPage from '@/pages/SignupPage'
@@ -30,7 +32,10 @@ vi.mock('@/api/routine', () => ({
   createRoutineTemplate: vi.fn(),
   updateRoutineTemplate: vi.fn(),
   deleteRoutineTemplate: vi.fn(),
+  updateRoutine: vi.fn(),
+  stopRoutine: vi.fn(),
 }))
+vi.mock('@/api/execution', () => ({ getExecutions: vi.fn() }))
 vi.mock('@/api/category', () => ({ getCategories: vi.fn() }))
 
 const TEMPLATE: RoutineTemplate = {
@@ -137,6 +142,42 @@ const SCENARIOS: ImeScenario[] = [
       await screen.findByRole('dialog')
     },
   },
+  {
+    // 인증 기록 0건 — 주기 · 시작일까지 열린 가장 넓은 폼. 수정 중 배경 refetch가 화면을 갈아엎으면 안 된다
+    name: '루틴 수정 대화상자',
+    files: [
+      '/src/components/routine/EditRoutineDialog.tsx',
+      '/src/components/routine/DefinitionFields.tsx',
+    ],
+    render: () => {
+      vi.mocked(getMyRoutines).mockResolvedValue([
+        {
+          routineId: 1,
+          routineTemplateId: null,
+          title: '아침 러닝',
+          challengeId: null,
+          startedAt: '2026-10-01',
+          endedAt: null,
+          isActive: true,
+          categoryCode: 'EXERCISE',
+          scheduleType: 'DAILY',
+          daysOfWeek: null,
+          targetCount: null,
+        },
+      ])
+      return withQuery(
+        <MemoryRouter initialEntries={['/routines/1']}>
+          <Routes>
+            <Route path="/routines/:id" element={<RoutineDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      )
+    },
+    open: async () => {
+      await userEvent.setup().click(await screen.findByRole('button', { name: '설정 수정' }))
+      await screen.findByRole('dialog')
+    },
+  },
 ]
 
 /** 입력이 있지만 조합 입력이 아니어서 시나리오가 필요 없는 파일 — 사유를 함께 적는다 */
@@ -149,6 +190,7 @@ describe('한글 IME — 조합 중 입력 노드 · 포커스 · 값이 유지�
     vi.mocked(getMyProfile).mockResolvedValue(PROFILE)
     vi.mocked(getMyRoutines).mockResolvedValue([])
     vi.mocked(getRoutineTemplates).mockResolvedValue([TEMPLATE])
+    vi.mocked(getExecutions).mockResolvedValue([])
     vi.mocked(getCategories).mockResolvedValue([
       { code: 'EXERCISE', name: '운동', icon: '🏃', displayOrder: 1 },
     ])

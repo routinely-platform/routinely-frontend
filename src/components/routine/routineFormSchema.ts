@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { RoutineDefinitionRequest } from '@/api/routine'
-import type { RoutineTemplate, ScheduleType, Weekday } from '@/types/routine'
+import type { RoutineTemplate, ScheduleDefinition, ScheduleType, Weekday } from '@/types/routine'
 import { addDays, daysBetween, isCompleteDate, serverToday } from '@/utils/routine'
 
 export const SCHEDULE_TYPES = ['DAILY', 'SPECIFIC_DAYS', 'WEEKLY_COUNT', 'MONTHLY_COUNT'] as const
@@ -13,7 +13,7 @@ export const MONTHLY_COUNT_MAX = 28
 export const BACKDATE_LIMIT_DAYS = 90
 export const PERIOD_LIMIT_DAYS = 366
 
-const definitionShape = {
+export const definitionShape = {
   title: z
     .string()
     .trim()
@@ -31,7 +31,7 @@ const definitionShape = {
 type DefinitionShapeValues = z.infer<z.ZodObject<typeof definitionShape>>
 
 /** 주기 유형에 딸린 값 — 고른 유형의 값만 본다. 다른 유형의 값은 남아 있어도 보내지 않는다 */
-const checkSchedule = (values: DefinitionShapeValues, ctx: z.RefinementCtx) => {
+export const checkSchedule = (values: DefinitionShapeValues, ctx: z.RefinementCtx) => {
   if (values.scheduleType === 'SPECIFIC_DAYS' && values.daysOfWeek.length === 0) {
     ctx.addIssue({
       code: 'custom',
@@ -101,8 +101,11 @@ export type RoutineFormValues = z.infer<typeof routineFormSchema>
 const DEFAULT_WEEKLY_COUNT = 3
 const DEFAULT_MONTHLY_COUNT = 10
 
-/** 빈 폼 또는 템플릿 프리필의 정의 기본값 */
-export function definitionDefaults(template?: RoutineTemplate): DefinitionFormValues {
+/** 정의를 가진 것 — 템플릿과 루틴이 같은 모양으로 갖는다 (ADR-0040) */
+type DefinitionSource = ScheduleDefinition & Pick<RoutineTemplate, 'title' | 'categoryCode'>
+
+/** 빈 폼 또는 템플릿 · 루틴 프리필의 정의 기본값 */
+export function definitionDefaults(template?: DefinitionSource): DefinitionFormValues {
   const type: ScheduleType = template?.scheduleType ?? 'DAILY'
   return {
     title: template?.title ?? '',
@@ -121,7 +124,7 @@ export function definitionDefaults(template?: RoutineTemplate): DefinitionFormVa
   }
 }
 
-const sortDays = (days: Weekday[]) => WEEKDAYS.filter((d) => days.includes(d))
+export const sortDays = (days: Weekday[]) => WEEKDAYS.filter((d) => days.includes(d))
 
 /** 폼 값 → 정의 5필드. 고른 유형에 딸린 값만 싣는다 */
 export function toDefinitionRequest(values: DefinitionFormValues): RoutineDefinitionRequest {

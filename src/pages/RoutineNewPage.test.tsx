@@ -72,6 +72,7 @@ const renderPage = (initialEntry = '/routines/new') => {
         <Routes>
           <Route path="/routines/new" element={<RoutineNewPage />} />
           <Route path="/routines" element={<div>목록 화면</div>} />
+          <Route path="/routines/:id" element={<div>상세 화면</div>} />
         </Routes>
         <LocationProbe />
       </MemoryRouter>
@@ -122,7 +123,9 @@ describe('RoutineNewPage', () => {
       startedAt: TODAY,
       endedAt: null,
     })
-    expect(await screen.findByText('목록 화면')).toBeInTheDocument()
+    // 만든 루틴의 상세로 간다 (#63) — 시작 응답의 routineId
+    expect(await screen.findByText('상세 화면')).toBeInTheDocument()
+    expect(screen.getByTestId('location')).toHaveTextContent(`/routines/${ONGOING.routineId}`)
   })
 
   it('필수 값이 비면 보내지 않고 알린다', async () => {

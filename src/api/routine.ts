@@ -11,7 +11,8 @@ interface RawRoutineResponse {
   startedAt: string
   endedAt: string | null
   isActive?: boolean
-  // record의 boolean isActive가 Jackson 설정에 따라 "active"로 나갈 수 있다 — 둘 다 받는다
+  // record의 boolean isActive — Jackson 3.1.0 기본 설정에서 "isActive" 그대로 나간다(2026-11-08 실측).
+  // 설정이 바뀌어 "active"로 나가도 깨지지 않게 둘 다 받는다
   active?: boolean
   categoryCode: string
   scheduleType: ScheduleType
@@ -94,4 +95,33 @@ export async function updateRoutineTemplate(
     body
   )
   return unwrapApiResponse(res.data, '템플릿을 수정하지 못했습니다.')
+}
+
+/**
+ * PATCH /routines/{routineId} — 보낸 필드만 바뀐다.
+ * 주기는 세 필드를 함께 보내야 한다(`isScheduleValid`). 종료일을 비우려면 `clearEndedAt`(`endedAt`과 동시 불가).
+ * 주기 · 시작일은 완료 기록이 있으면 400, 챌린지 루틴은 정의 · 기간을 보내면 403이다
+ */
+export interface UpdateRoutineRequest {
+  title?: string
+  categoryCode?: string
+  scheduleType?: ScheduleType
+  daysOfWeek?: Weekday[] | null
+  targetCount?: number | null
+  startedAt?: string
+  endedAt?: string
+  clearEndedAt?: true
+}
+
+export async function updateRoutine(
+  routineId: number,
+  body: UpdateRoutineRequest
+): Promise<Routine> {
+  const res = await apiClient.patch<ApiResponse<RawRoutineResponse>>(`/routines/${routineId}`, body)
+  return normalizeRoutine(unwrapApiResponse(res.data, '루틴을 수정하지 못했습니다.'))
+}
+
+/** DELETE /routines/{routineId} — 삭제가 아니라 중단이다(isActive=false). 챌린지 루틴은 403 */
+export async function stopRoutine(routineId: number): Promise<void> {
+  await apiClient.delete<ApiResponse<void>>(`/routines/${routineId}`)
 }
