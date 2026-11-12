@@ -137,9 +137,13 @@
 
 /* 서버 오류 한 줄 — 버튼 줄과 함께 고정이라 본문 스크롤 위치와 상관없이 보인다 */
 .error {
+  /* 세 줄까지 — 넘치면 이 안에서 스크롤한다. 버튼 줄은 줄지 않으므로 긴 오류가 버튼을 밀어내지 않게 막는다 */
+  max-height: calc(1.5em * 3);
+  overflow-y: auto;
   margin: 0;
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.5;
   color: var(--danger);
 }
 

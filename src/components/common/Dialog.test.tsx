@@ -157,4 +157,77 @@ describe('Dialog', () => {
     await user.type(screen.getByRole('textbox', { name: '제목' }), '아침{Enter}')
     expect(onSubmit).toHaveBeenCalledTimes(2)
   })
+
+  describe('겹친 대화상자 (#85 리뷰 1)', () => {
+    /** 아래 창(수정) 안에서 위 창(확인)을 연다 — #20 인증 상세 → 인증 취소 확인창 모양 */
+    const Stacked = ({ topPending = false }: { topPending?: boolean }) => {
+      const [lower, setLower] = useState(true)
+      const [upper, setUpper] = useState(false)
+      return (
+        <>
+          {lower && (
+            <Dialog
+              title="아래 창"
+              onClose={() => setLower(false)}
+              actions={
+                <button type="button" onClick={() => setUpper(true)}>
+                  위 창 열기
+                </button>
+              }
+            >
+              <p>본문</p>
+            </Dialog>
+          )}
+          {upper && (
+            <Dialog
+              title="위 창"
+              onClose={() => setUpper(false)}
+              isPending={topPending}
+              actions={<button type="button">확인</button>}
+            >
+              <p>확인할까요?</p>
+            </Dialog>
+          )}
+        </>
+      )
+    }
+
+    const openStacked = async (topPending = false) => {
+      const user = userEvent.setup()
+      render(<Stacked topPending={topPending} />)
+      const opener = screen.getByRole('button', { name: '위 창 열기' })
+      await user.click(opener)
+      return { user, opener }
+    }
+
+    it('Esc는 위 창만 닫고, 포커스는 위 창을 연 버튼으로 돌아간다', async () => {
+      const { user, opener } = await openStacked()
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog', { name: '위 창' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: '아래 창' })).toBeInTheDocument()
+      expect(opener).toHaveFocus()
+
+      // 이제 아래 창이 맨 위다
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('위 창이 저장 중이면 Esc에 아무 창도 닫히지 않는다', async () => {
+      const { user } = await openStacked(true)
+      await user.keyboard('{Escape}')
+      expect(screen.getByRole('dialog', { name: '위 창' })).toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: '아래 창' })).toBeInTheDocument()
+    })
+
+    it('Tab은 위 창 안에서만 돈다', async () => {
+      const { user } = await openStacked()
+      const upper = screen.getByRole('dialog', { name: '위 창' })
+      for (let i = 0; i < 4; i += 1) {
+        await user.tab()
+        expect(upper).toContainElement(document.activeElement as HTMLElement)
+      }
+      await user.tab({ shift: true })
+      expect(upper).toContainElement(document.activeElement as HTMLElement)
+    })
+  })
 })

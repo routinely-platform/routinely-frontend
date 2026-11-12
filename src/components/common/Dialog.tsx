@@ -1,4 +1,4 @@
-import { useEffect, useId, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react'
 import { useDialogFocus } from '@/hooks/useDialogFocus'
 import { cn } from '@/utils/cn'
 import { isComposingKeyEvent } from '@/utils/ime'
@@ -46,7 +46,7 @@ const CloseIcon = () => (
 
 /**
  * 공용 대화상자 — 머리말(제목 + ×) · 본문(스크롤) · 버튼 줄(고정).
- * 포커스 가두기 · 닫으면 연 자리로 복귀는 useDialogFocus가, Esc · ×의 닫기 규칙은 여기서 한 번에 다룬다
+ * 포커스 가두기 · 맨 위 창 판정 · 닫으면 연 자리로 복귀는 useDialogFocus가, 닫아도 되는지(조합 · 저장 중)는 여기서 정한다
  */
 const Dialog = ({
   title,
@@ -60,16 +60,13 @@ const Dialog = ({
   children,
 }: DialogProps) => {
   const titleId = useId()
-  const dialogRef = useDialogFocus<HTMLDivElement>()
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+  const dialogRef = useDialogFocus<HTMLDivElement>({
+    // 맨 위 창일 때만 불린다(겹친 창은 아래 창이 받지 않는다)
+    onEscape: (e) => {
       // 조합 중 Esc는 IME가 조합을 취소하는 키다 — 닫지 않는다. 저장 중에도 닫지 않는다
-      if (e.key === 'Escape' && !isComposingKeyEvent(e) && !isPending) onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, isPending])
+      if (!isComposingKeyEvent(e) && !isPending) onClose()
+    },
+  })
 
   const body = (
     <>
