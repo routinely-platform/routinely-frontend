@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import Dialog from './Dialog'
 
 interface HarnessProps {
@@ -232,33 +232,55 @@ describe('Dialog', () => {
   })
 
   describe('겹친 대화상자 — 2차 리뷰', () => {
-    it('부모 창과 그 안의 자식 창이 함께 열려도 Esc는 자식(안쪽) 창만 닫는다', async () => {
+    it('부모 창과 그 안의 자식 창이 함께 열려도 Esc는 자식(안쪽) 창만 닫고, 포커스는 부모 창으로 간다', async () => {
       const Nested = () => {
-        const [parent, setParent] = useState(true)
-        const [child, setChild] = useState(true)
-        return parent ? (
-          <Dialog
-            title="부모 창"
-            onClose={() => setParent(false)}
-            actions={<button type="button">부모 버튼</button>}
-          >
-            {child && (
+        const [parent, setParent] = useState(false)
+        const [child, setChild] = useState(false)
+        return (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setParent(true)
+                setChild(true)
+              }}
+            >
+              함께 열기
+            </button>
+            {parent && (
               <Dialog
-                title="자식 창"
-                onClose={() => setChild(false)}
-                actions={<button type="button">자식 버튼</button>}
+                title="부모 창"
+                onClose={() => setParent(false)}
+                actions={<button type="button">부모 버튼</button>}
               >
-                <p>자식 본문</p>
+                {child && (
+                  <Dialog
+                    title="자식 창"
+                    onClose={() => setChild(false)}
+                    actions={<button type="button">자식 버튼</button>}
+                  >
+                    <p>자식 본문</p>
+                  </Dialog>
+                )}
               </Dialog>
             )}
-          </Dialog>
-        ) : null
+          </>
+        )
       }
       const user = userEvent.setup()
       render(<Nested />)
+      const pageButton = screen.getByRole('button', { name: '함께 열기' })
+      await user.click(pageButton)
+
       await user.keyboard('{Escape}')
       expect(screen.queryByRole('dialog', { name: '자식 창' })).not.toBeInTheDocument()
-      expect(screen.getByRole('dialog', { name: '부모 창' })).toBeInTheDocument()
+      const parentDialog = screen.getByRole('dialog', { name: '부모 창' })
+      // 부모가 열려 있다 — 페이지 버튼이 아니라 부모 창으로 돌아간다 (#85 3차 리뷰 2)
+      expect(parentDialog).toHaveFocus()
+
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(pageButton).toHaveFocus()
     })
 
     it('아래 창만 먼저 닫히면 포커스를 옮기지 않고, 위 창을 닫을 때 맨 처음 연 자리로 돌아간다', async () => {
@@ -319,27 +341,13 @@ describe('Dialog', () => {
     })
   })
 
-  describe('긴 서버 오류', () => {
-    // jsdom은 레이아웃을 재지 않는다 — 높이를 정해 넘침 여부를 흉내 낸다
-    const mockHeights = (scrollHeight: number, clientHeight: number) => {
-      vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(scrollHeight)
-      vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(clientHeight)
-    }
-
-    afterEach(() => {
-      vi.restoreAllMocks()
-    })
-
-    it('넘치면 Tab으로 닿는다 — 키보드로 나머지를 스크롤할 수 있다', async () => {
-      mockHeights(120, 63)
-      await openDialog()
-      expect(screen.getByRole('alert')).toHaveAttribute('tabindex', '0')
-    })
-
-    it('넘치지 않으면 Tab 정거장을 만들지 않는다', async () => {
-      mockHeights(21, 63)
-      await openDialog()
-      expect(screen.getByRole('alert')).not.toHaveAttribute('tabindex')
-    })
+  it('서버 오류는 Tab으로 닿는다 — 세 줄을 넘어 스크롤될 때 키보드로 나머지를 읽는다 (#85 3차 리뷰 1)', async () => {
+    const { user } = await openDialog()
+    const alert = screen.getByRole('alert')
+    expect(alert).toHaveAttribute('tabindex', '0')
+    // 본문 입력 → 오류 → 버튼 줄 순서
+    screen.getByRole('textbox', { name: '제목' }).focus()
+    await user.tab()
+    expect(alert).toHaveFocus()
   })
 })

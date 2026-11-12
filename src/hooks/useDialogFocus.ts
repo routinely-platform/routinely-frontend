@@ -84,7 +84,14 @@ export function useDialogFocus<T extends HTMLElement>({ onEscape }: DialogFocusO
     const entry: OpenDialog = { element: dialog, opener, onEscape: onEscapeRef }
     // 이미 쌓인 창을 품고 있으면(부모 창) 그 아래에 끼운다
     const inner = openDialogs.findIndex((open) => dialog.contains(open.element))
-    openDialogs.splice(inner === -1 ? openDialogs.length : inner, 0, entry)
+    if (inner === -1) {
+      openDialogs.push(entry)
+    } else {
+      openDialogs.splice(inner, 0, entry)
+      // 같은 렌더에 함께 열려 자식도 바깥(페이지 버튼)을 연 자리로 기억했다 — 자식이 닫히면 부모 창으로 돌아간다
+      const child = openDialogs[inner + 1]
+      if (!dialog.contains(child.opener)) child.opener = dialog
+    }
     if (openDialogs.length === 1) document.addEventListener('keydown', handleKeyDown)
 
     return () => {

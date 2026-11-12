@@ -147,7 +147,7 @@
   color: var(--danger);
 }
 
-/* 넘칠 때만 Tab으로 닿는다(DialogError) — 키보드 사용자에게 어디를 스크롤하는지 보여 준다 */
+/* Tab으로 닿는다(DialogError) — 키보드 사용자에게 어디를 스크롤하는지 보여 준다 */
 .error:focus-visible {
   outline: 2px solid var(--coral-500);
   outline-offset: 2px;
