@@ -7,6 +7,7 @@ import { MY_ROUTINES_QUERY_KEY } from '@/hooks/useRoutines'
 import { getCategories } from '@/api/category'
 import { getExecutions, type ExecutionRangeParams } from '@/api/execution'
 import { getMyRoutines, stopRoutine, updateRoutine } from '@/api/routine'
+import { apiError } from '@/test/axiosError'
 import type { Execution } from '@/types/execution'
 import type { Routine } from '@/types/routine'
 import RoutineDetailPage from './RoutineDetailPage'
@@ -310,6 +311,49 @@ describe('RoutineDetailPage', () => {
 
       expect(mockedUpdate).toHaveBeenCalledWith(1, { title: '저녁 러닝' })
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
+
+    it('아무것도 바꾸지 않고 저장하면 요청 없이 닫힌다', async () => {
+      const user = renderPage()
+      await user.click(await screen.findByRole('button', { name: '설정 수정' }))
+      const dialog = await screen.findByRole('dialog')
+      await user.click(within(dialog).getByRole('button', { name: '저장' }))
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(mockedUpdate).not.toHaveBeenCalled()
+    })
+
+    it('저장 실패 — 서버 문구를 버튼 줄 위에 보여 주고, 다시 저장하면 지운다 (#85 리뷰 4)', async () => {
+      mockedUpdate.mockRejectedValueOnce(
+        apiError(400, { success: false, message: '종료일을 확인해 주세요.' })
+      )
+      let resolveRetry: (value: Routine) => void = () => {}
+      mockedUpdate.mockImplementationOnce(
+        () => new Promise<Routine>((resolve) => (resolveRetry = resolve))
+      )
+      const user = renderPage()
+      await user.click(await screen.findByRole('button', { name: '설정 수정' }))
+      const dialog = await screen.findByRole('dialog')
+      const title = within(dialog).getByLabelText('루틴 이름')
+      await user.clear(title)
+      await user.type(title, '저녁 러닝')
+      const save = within(dialog).getByRole('button', { name: '저장' })
+      await user.click(save)
+
+      // 실패해도 창은 남고, 오류는 본문(스크롤 영역)이 아니라 버튼 줄과 같은 고정 영역에 있다
+      const alert = await within(dialog).findByRole('alert')
+      expect(alert).toHaveTextContent('종료일을 확인해 주세요.')
+      expect(alert.parentElement).toContainElement(save)
+      expect(alert.parentElement).not.toContainElement(title)
+
+      // 다시 저장 — 요청이 도는 동안 이전 오류는 지워진다
+      await user.click(save)
+      expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
+      expect(within(dialog).getByRole('button', { name: '저장 중...' })).toBeDisabled()
+
+      resolveRetry(routine({ title: '저녁 러닝' }))
+      await vi.waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+      expect(mockedUpdate).toHaveBeenCalledTimes(2)
     })
 
     it('종료일은 마지막 인증일보다 앞당길 수 없다', async () => {

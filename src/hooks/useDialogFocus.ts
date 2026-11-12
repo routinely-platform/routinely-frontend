@@ -1,19 +1,79 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
+interface OpenDialog {
+  element: HTMLElement
+  /** 닫히면 포커스를 돌려줄 곳 — 아래 창이 먼저 닫히면 그 창의 것을 물려받는다 */
+  opener: HTMLElement | null
+  /** 최신 Esc 처리 함수 — 렌더마다 바뀌어도 쌓인 자리는 그대로 둔다 */
+  onEscape: { current: ((event: KeyboardEvent) => void) | undefined }
+}
+
 /**
- * 대화상자 키보드 포커스 — 열릴 때 안으로 옮기고, Tab · Shift+Tab을 안에서만 돌리고, 닫히면 연 자리로 돌려준다.
+ * 열린 대화상자 — 나중에 연 것이 뒤에 온다. Esc · Tab은 맨 뒤(맨 위 창)만 받는다.
+ *
+ * 창마다 document 리스너를 따로 걸면 키 한 번에 모든 창이 반응한다(위 창 Esc에 아래 창도 닫힌다).
+ * "내가 맨 위인가"를 각 리스너가 따지게 해도 막히지 않는다 — 실제 브라우저는 리스너 사이에
+ * 마이크로태스크를 비워서, 위 창 리스너가 닫기를 부르면 React가 그 창을 먼저 지우고
+ * 다음 리스너(아래 창)는 자기가 맨 위라고 본다. 그래서 리스너를 하나만 두고 맨 위에만 넘긴다.
+ *
+ * 순서는 effect가 도는 순서가 아니라 "안쪽 창이 위"다 — 부모 창과 그 안의 자식 창이 같은 렌더에
+ * 마운트되면 React는 자식 effect를 먼저 돌려 자식이 아래로 깔린다
+ */
+const openDialogs: OpenDialog[] = []
+
+const trapTab = (dialog: HTMLElement, event: KeyboardEvent) => {
+  const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE))
+  if (items.length === 0) {
+    event.preventDefault()
+    return
+  }
+  const first = items[0]
+  const last = items[items.length - 1]
+  const active = document.activeElement
+  const outside = !dialog.contains(active)
+  // 대화상자 자체(처음 포커스 자리)에서 Shift+Tab도 마지막으로 보낸다
+  if (event.shiftKey && (active === first || active === dialog || outside)) {
+    event.preventDefault()
+    last.focus()
+  } else if (!event.shiftKey && (active === last || outside)) {
+    event.preventDefault()
+    first.focus()
+  }
+}
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  const top = openDialogs[openDialogs.length - 1]
+  if (!top) return
+  if (event.key === 'Tab') trapTab(top.element, event)
+  else if (event.key === 'Escape') top.onEscape.current?.(event)
+}
+
+interface DialogFocusOptions {
+  /** 이 창이 맨 위일 때만 불린다. 조합 중 · 저장 중 판단은 부르는 쪽이 한다 */
+  onEscape?: (event: KeyboardEvent) => void
+}
+
+/**
+ * 대화상자 키보드 — 열릴 때 안으로 포커스를 옮기고, Tab · Shift+Tab을 안에서만 돌리고,
+ * Esc를 맨 위 창에만 넘기고, 닫히면 연 자리로 포커스를 돌려준다.
  * 가두지 않으면 Shift+Tab으로 배경 링크에 닿아 대화상자를 연 채로 다른 화면으로 넘어간다.
  * 돌려준 ref를 role="dialog" 요소에 걸고, 그 요소에 tabIndex={-1}을 준다
  */
-export function useDialogFocus<T extends HTMLElement>() {
+export function useDialogFocus<T extends HTMLElement>({ onEscape }: DialogFocusOptions = {}) {
   const dialogRef = useRef<T>(null)
+  const onEscapeRef = useRef(onEscape)
   // 연 버튼 — 첫 렌더에서 잰다. 안쪽 autoFocus가 먼저 포커스를 옮기기 전이다
   const [opener] = useState(() =>
     document.activeElement instanceof HTMLElement ? document.activeElement : null
   )
+
+  // 화면에 반영되는 즉시 갱신한다 — useEffect면 "저장 중"이 그려진 뒤에도 잠깐 이전 함수(닫아도 됨)가 남는다
+  useLayoutEffect(() => {
+    onEscapeRef.current = onEscape
+  })
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -21,31 +81,33 @@ export function useDialogFocus<T extends HTMLElement>() {
     // 안쪽 autoFocus가 이미 잡았으면 그대로 둔다
     if (!dialog.contains(document.activeElement)) dialog.focus()
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Tab') return
-      const items = Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE))
-      if (items.length === 0) {
-        event.preventDefault()
+    const entry: OpenDialog = { element: dialog, opener, onEscape: onEscapeRef }
+    // 이미 쌓인 창을 품고 있으면(부모 창) 그 아래에 끼운다
+    const inner = openDialogs.findIndex((open) => dialog.contains(open.element))
+    if (inner === -1) {
+      openDialogs.push(entry)
+    } else {
+      openDialogs.splice(inner, 0, entry)
+      // 같은 렌더에 함께 열려 자식도 바깥(페이지 버튼)을 연 자리로 기억했다 — 자식이 닫히면 부모 창으로 돌아간다
+      const child = openDialogs[inner + 1]
+      if (!dialog.contains(child.opener)) child.opener = dialog
+    }
+    if (openDialogs.length === 1) document.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      const index = openDialogs.indexOf(entry)
+      const isTop = index === openDialogs.length - 1
+      openDialogs.splice(index, 1)
+      if (openDialogs.length === 0) document.removeEventListener('keydown', handleKeyDown)
+
+      if (isTop) {
+        if (entry.opener?.isConnected) entry.opener.focus()
         return
       }
-      const first = items[0]
-      const last = items[items.length - 1]
-      const active = document.activeElement
-      const outside = !dialog.contains(active)
-      // 대화상자 자체(처음 포커스 자리)에서 Shift+Tab도 마지막으로 보낸다
-      if (event.shiftKey && (active === first || active === dialog || outside)) {
-        event.preventDefault()
-        last.focus()
-      } else if (!event.shiftKey && (active === last || outside)) {
-        event.preventDefault()
-        first.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      if (opener?.isConnected) opener.focus()
+      // 아래 창만 먼저 닫혔다 — 위 창이 열려 있으니 포커스를 옮기지 않는다.
+      // 위 창을 연 버튼이 이 창 안에 있었다면 함께 사라졌으므로, 이 창을 연 자리를 물려준다
+      const above = openDialogs[index]
+      if (above.opener === null || dialog.contains(above.opener)) above.opener = entry.opener
     }
   }, [opener])
 

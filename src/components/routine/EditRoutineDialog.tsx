@@ -1,12 +1,12 @@
-import { useEffect, useId, useState } from 'react'
+import { useId, useState } from 'react'
 import { FormProvider, useForm, useFormContext, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { getApiErrorPayload } from '@/components/auth/authFormErrors'
-import { useDialogFocus } from '@/hooks/useDialogFocus'
+import Dialog from '@/components/common/Dialog'
 import { useUpdateRoutine } from '@/hooks/useRoutines'
 import type { Routine } from '@/types/routine'
 import { cn } from '@/utils/cn'
-import { isComposingKeyEvent, preventComposingSubmit } from '@/utils/ime'
+import { preventComposingSubmit } from '@/utils/ime'
 import { addDays, formatMonthDay, isCompleteDate, scheduleLabel } from '@/utils/routine'
 import DefinitionFields, { FieldError } from './DefinitionFields'
 import {
@@ -20,7 +20,6 @@ import {
 } from './routineEditSchema'
 import { PERIOD_LIMIT_DAYS } from './routineFormSchema'
 import shared from './routine.module.css'
-import dialogStyles from './DeleteTemplateDialog.module.css'
 import styles from './RoutineForm.module.css'
 
 interface EditRoutineDialogProps {
@@ -63,25 +62,14 @@ const EndDateInput = ({
 const DEFAULT_ERROR = '저장하지 못했어요. 잠시 후 다시 시도해 주세요.'
 
 const EditRoutineDialog = ({ routine, lock, onClose }: EditRoutineDialogProps) => {
-  const titleId = useId()
   const startedAtId = useId()
   const endedAtId = useId()
-  const dialogRef = useDialogFocus<HTMLDivElement>()
   const { mutateAsync, isPending } = useUpdateRoutine(routine.routineId)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const methods = useForm<RoutineEditFormValues>({
     resolver: zodResolver(routineEditSchema(routine, lock)),
     defaultValues: routineEditDefaults(routine),
   })
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // 조합 중 Esc는 IME가 조합을 취소하는 키다 — 닫지 않는다. 저장 중에도 닫지 않는다
-      if (e.key === 'Escape' && !isComposingKeyEvent(e) && !isPending) onClose()
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [onClose, isPending])
 
   const onSubmit = async (values: RoutineEditFormValues) => {
     setSubmitError(null)
@@ -100,101 +88,92 @@ const EditRoutineDialog = ({ routine, lock, onClose }: EditRoutineDialogProps) =
   }
 
   return (
-    <div className={dialogStyles.backdrop}>
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        tabIndex={-1}
-        className={cn(dialogStyles.dialog, dialogStyles.wide)}
+    // FormProvider는 DOM을 그리지 않는다 — 폼 태그는 Dialog가 본문과 버튼 줄을 감싸 그린다
+    <FormProvider {...methods}>
+      <Dialog
+        title="루틴 설정 수정"
+        onClose={onClose}
+        isPending={isPending}
+        wide
+        formProps={{
+          onSubmit: methods.handleSubmit(onSubmit),
+          onKeyDown: preventComposingSubmit,
+          noValidate: true,
+        }}
+        error={submitError}
+        actions={
+          <>
+            <button
+              type="button"
+              className={cn(shared.btn, shared.btnOutline, shared.btnSm)}
+              onClick={onClose}
+              disabled={isPending}
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              className={cn(shared.btn, shared.btnPrimary, shared.btnSm)}
+              disabled={isPending}
+            >
+              {isPending ? '저장 중...' : '저장'}
+            </button>
+          </>
+        }
       >
-        <h2 id={titleId} className={dialogStyles.title}>
-          루틴 설정 수정
-        </h2>
-        <FormProvider {...methods}>
-          <form
-            className={cn(styles.fields, dialogStyles.form)}
-            onSubmit={methods.handleSubmit(onSubmit)}
-            onKeyDown={preventComposingSubmit}
-            noValidate
-          >
-            <DefinitionFields
-              scheduleLock={
-                lock.hasHistory
-                  ? { value: scheduleLabel(routine), reason: scheduleLockReason(lock) }
-                  : undefined
-              }
-            />
+        <div className={styles.fields}>
+          <DefinitionFields
+            scheduleLock={
+              lock.hasHistory
+                ? { value: scheduleLabel(routine), reason: scheduleLockReason(lock) }
+                : undefined
+            }
+          />
 
-            <div className={styles.field}>
-              <span className={styles.label}>기간</span>
-              <div className={styles.dateRow}>
-                <div className={styles.field}>
-                  {lock.hasHistory ? (
-                    <>
-                      <span className={styles.label}>시작일</span>
-                      <p className={styles.lockedValue}>{formatMonthDay(routine.startedAt)}</p>
-                      <p className={styles.lockReason}>
-                        <span aria-hidden="true">🔒</span> <span>{startLockReason(lock)}</span>
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <label htmlFor={startedAtId} className={styles.label}>
-                        시작일
-                      </label>
-                      <input
-                        id={startedAtId}
-                        type="date"
-                        className={styles.input}
-                        {...methods.register('startedAt')}
-                      />
-                      <FieldError name="startedAt" />
-                    </>
-                  )}
-                </div>
-                <div className={styles.field}>
-                  <label htmlFor={endedAtId} className={styles.label}>
-                    종료일 <span className={styles.optional}>(선택)</span>
-                  </label>
-                  <EndDateInput id={endedAtId} lastCompletedDate={lock.lastCompletedDate} />
-                  <FieldError name="endedAt" />
-                </div>
+          <div className={styles.field}>
+            <span className={styles.label}>기간</span>
+            <div className={styles.dateRow}>
+              <div className={styles.field}>
+                {lock.hasHistory ? (
+                  <>
+                    <span className={styles.label}>시작일</span>
+                    <p className={styles.lockedValue}>{formatMonthDay(routine.startedAt)}</p>
+                    <p className={styles.lockReason}>
+                      <span aria-hidden="true">🔒</span> <span>{startLockReason(lock)}</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <label htmlFor={startedAtId} className={styles.label}>
+                      시작일
+                    </label>
+                    <input
+                      id={startedAtId}
+                      type="date"
+                      className={styles.input}
+                      {...methods.register('startedAt')}
+                    />
+                    <FieldError name="startedAt" />
+                  </>
+                )}
               </div>
-              <p className={styles.hint}>
-                종료일을 비워 두면 기한 없이 계속돼요.
-                {lock.lastCompletedDate !== null &&
-                  ` 늘리는 건 언제든 되고, 줄이는 건 마지막 인증일(${formatMonthDay(lock.lastCompletedDate)})까지만 돼요.`}
-              </p>
+              <div className={styles.field}>
+                <label htmlFor={endedAtId} className={styles.label}>
+                  종료일 <span className={styles.optional}>(선택)</span>
+                </label>
+                <EndDateInput id={endedAtId} lastCompletedDate={lock.lastCompletedDate} />
+                <FieldError name="endedAt" />
+              </div>
             </div>
-
-            {submitError && (
-              <p className={styles.error} role="alert">
-                {submitError}
-              </p>
-            )}
-            <div className={dialogStyles.actions}>
-              <button
-                type="button"
-                className={cn(shared.btn, shared.btnOutline, shared.btnSm)}
-                onClick={onClose}
-                disabled={isPending}
-              >
-                취소
-              </button>
-              <button
-                type="submit"
-                className={cn(shared.btn, shared.btnPrimary, shared.btnSm)}
-                disabled={isPending}
-              >
-                {isPending ? '저장 중...' : '저장'}
-              </button>
-            </div>
-          </form>
-        </FormProvider>
-      </div>
-    </div>
+            <p className={styles.hint}>
+              종료일을 비워 두면 기한 없이 계속돼요.
+              {lock.lastCompletedDate !== null &&
+                ` 늘리는 건 언제든 되고, 줄이는 건 마지막 인증일(${formatMonthDay(lock.lastCompletedDate)})까지만 돼요.`}
+            </p>
+          </div>
+        </div>
+      </Dialog>
+    </FormProvider>
   )
 }
 
