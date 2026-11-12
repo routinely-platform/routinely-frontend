@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type ReactNode } from 'react'
 import { Controller, useFormContext, useFormState, useWatch } from 'react-hook-form'
 import CategoryPicker from '@/components/common/CategoryPicker'
 import CharCounter from '@/components/common/CharCounter'
@@ -150,11 +150,19 @@ const ScheduleDetail = () => {
   )
 }
 
+interface DefinitionFieldsProps {
+  /**
+   * 반복 주기를 잠근다 — 루틴 수정에서 인증 기록이 있을 때 (screens.md §6).
+   * 칩 대신 지금 값과 잠긴 이유를 보여 준다. 폼 값은 원래 주기 그대로 남는다
+   */
+  scheduleLock?: { value: string; reason: ReactNode }
+}
+
 /**
- * 정의 5필드 — 제목 · 카테고리 · 반복 주기. 루틴 시작 폼과 템플릿 수정이 같은 조각을 쓴다.
+ * 정의 5필드 — 제목 · 카테고리 · 반복 주기. 루틴 시작 폼 · 템플릿 수정 · 루틴 수정이 같은 조각을 쓴다.
  * 이 컴포넌트는 값을 구독하지 않는다 — 제목을 칠 때마다 재렌더하면 안 된다 (AGENTS.md §6-1)
  */
-const DefinitionFields = () => {
+const DefinitionFields = ({ scheduleLock }: DefinitionFieldsProps) => {
   const { control, register } = useFormContext<DefinitionFormValues>()
   const titleId = useId()
   const categoryLabelId = useId()
@@ -203,26 +211,37 @@ const DefinitionFields = () => {
           반복 주기
           <Tooltip content={SCHEDULE_TOOLTIP} label="주기별 차이" />
         </span>
-        <Controller
-          control={control}
-          name="scheduleType"
-          render={({ field }) => (
-            <div className={shared.chips} role="group" aria-labelledby={scheduleLabelId}>
-              {SCHEDULE_TYPES.map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  aria-pressed={field.value === type}
-                  className={cn(shared.chip, field.value === type && shared.chipOn)}
-                  onClick={() => field.onChange(type)}
-                >
-                  {SCHEDULE_META[type].label}
-                </button>
-              ))}
-            </div>
-          )}
-        />
-        <ScheduleDetail />
+        {scheduleLock ? (
+          <>
+            <p className={styles.lockedValue}>{scheduleLock.value}</p>
+            <p className={styles.lockReason}>
+              <span aria-hidden="true">🔒</span> <span>{scheduleLock.reason}</span>
+            </p>
+          </>
+        ) : (
+          <>
+            <Controller
+              control={control}
+              name="scheduleType"
+              render={({ field }) => (
+                <div className={shared.chips} role="group" aria-labelledby={scheduleLabelId}>
+                  {SCHEDULE_TYPES.map((type) => (
+                    <button
+                      key={type}
+                      type="button"
+                      aria-pressed={field.value === type}
+                      className={cn(shared.chip, field.value === type && shared.chipOn)}
+                      onClick={() => field.onChange(type)}
+                    >
+                      {SCHEDULE_META[type].label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
+            <ScheduleDetail />
+          </>
+        )}
       </div>
     </>
   )

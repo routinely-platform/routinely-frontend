@@ -208,9 +208,10 @@ const RoutineForm = ({ template, latestTemplate, onDisconnect }: RoutineFormProp
     const reuseTemplate = latestTemplate && !isDefinitionEdited(values, latestTemplate)
 
     try {
+      let created
       if (reuseTemplate) {
         // 템플릿 ID만 — 정의를 함께 보내면 400 (#19 G1)
-        await startRoutine({ routineTemplateId: latestTemplate.templateId, ...period })
+        created = await startRoutine({ routineTemplateId: latestTemplate.templateId, ...period })
       } else if (values.saveAsTemplate) {
         // 시작 API에 저장 옵션이 없다 — ① 템플릿 생성 → ② 받은 ID로 시작 (#19 G2)
         const definitionKey = JSON.stringify(definition)
@@ -222,15 +223,16 @@ const RoutineForm = ({ template, latestTemplate, onDisconnect }: RoutineFormProp
           setSavedTemplate({ templateId: savedTemplateId, definitionKey })
         }
         try {
-          await startRoutine({ routineTemplateId: savedTemplateId, ...period })
+          created = await startRoutine({ routineTemplateId: savedTemplateId, ...period })
         } catch {
           setSubmitError(PARTIAL_ERROR)
           return
         }
       } else {
-        await startRoutine({ ...definition, ...period })
+        created = await startRoutine({ ...definition, ...period })
       }
-      navigate('/routines')
+      // 만든 루틴의 상세로 간다 — 첫 인증 · 달력이 거기 있다 (#63). 모든 경로가 시작 응답을 받는다
+      navigate(`/routines/${created.routineId}`)
     } catch (error) {
       setSubmitError(getApiErrorPayload(error)?.message || DEFAULT_ERROR)
     }
