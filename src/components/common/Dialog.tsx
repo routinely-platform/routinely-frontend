@@ -1,4 +1,11 @@
-import { useId, type ComponentPropsWithoutRef, type ReactNode } from 'react'
+import {
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ComponentPropsWithoutRef,
+  type ReactNode,
+} from 'react'
 import { useDialogFocus } from '@/hooks/useDialogFocus'
 import { cn } from '@/utils/cn'
 import { isComposingKeyEvent } from '@/utils/ime'
@@ -28,6 +35,27 @@ interface DialogProps {
   actions: ReactNode
   /** 본문 — 길면 여기만 스크롤한다 */
   children: ReactNode
+}
+
+/**
+ * 서버 오류 한 줄 — 세 줄을 넘으면 그 안에서 스크롤한다(CSS).
+ * 넘칠 때만 Tab으로 닿게 한다. Safari는 스크롤 영역에 포커스를 주지 않아 키보드로는 나머지를 못 읽는다.
+ * 넘치지 않으면 의미 없는 Tab 정거장을 만들지 않는다
+ */
+const DialogError = ({ children }: { children: ReactNode }) => {
+  const ref = useRef<HTMLParagraphElement>(null)
+  const [scrollable, setScrollable] = useState(false)
+
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (el) setScrollable(el.scrollHeight > el.clientHeight)
+  }, [children])
+
+  return (
+    <p ref={ref} className={styles.error} role="alert" tabIndex={scrollable ? 0 : undefined}>
+      {children}
+    </p>
+  )
 }
 
 const CloseIcon = () => (
@@ -72,11 +100,7 @@ const Dialog = ({
     <>
       <div className={styles.content}>{children}</div>
       <div className={styles.footer}>
-        {error && (
-          <p className={styles.error} role="alert">
-            {error}
-          </p>
-        )}
+        {error && <DialogError>{error}</DialogError>}
         <div className={styles.actions}>{actions}</div>
       </div>
     </>

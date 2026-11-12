@@ -147,6 +147,13 @@
   color: var(--danger);
 }
 
+/* 넘칠 때만 Tab으로 닿는다(DialogError) — 키보드 사용자에게 어디를 스크롤하는지 보여 준다 */
+.error:focus-visible {
+  outline: 2px solid var(--coral-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* 넓은(스크롤되는) 대화상자 — 경계선이 "본문이 따로 스크롤된다"를 보여 준다.
    macOS · iOS는 스크롤바가 평소에 숨어 있어 이것이 유일한 단서다 */
 .wide .header {

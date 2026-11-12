@@ -1,11 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import {
-  deleteProfileImage,
-  getMyProfile,
-  updateProfile,
-  uploadProfileImage,
-} from '@/api/user'
+import { deleteProfileImage, getMyProfile, updateProfile, uploadProfileImage } from '@/api/user'
 import { useAuthStore } from '@/stores/authStore'
 import type { MyProfile, UpdateProfileRequest } from '@/types/user'
 
@@ -44,7 +39,7 @@ export function useUpdateProfile() {
 }
 
 function useProfileImageMutation<TVariables>(
-  mutationFn: (variables: TVariables) => Promise<MyProfile>,
+  mutationFn: (variables: TVariables) => Promise<MyProfile>
 ) {
   const queryClient = useQueryClient()
 

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import Dialog from './Dialog'
 
 interface HarnessProps {
@@ -228,6 +228,118 @@ describe('Dialog', () => {
       }
       await user.tab({ shift: true })
       expect(upper).toContainElement(document.activeElement as HTMLElement)
+    })
+  })
+
+  describe('겹친 대화상자 — 2차 리뷰', () => {
+    it('부모 창과 그 안의 자식 창이 함께 열려도 Esc는 자식(안쪽) 창만 닫는다', async () => {
+      const Nested = () => {
+        const [parent, setParent] = useState(true)
+        const [child, setChild] = useState(true)
+        return parent ? (
+          <Dialog
+            title="부모 창"
+            onClose={() => setParent(false)}
+            actions={<button type="button">부모 버튼</button>}
+          >
+            {child && (
+              <Dialog
+                title="자식 창"
+                onClose={() => setChild(false)}
+                actions={<button type="button">자식 버튼</button>}
+              >
+                <p>자식 본문</p>
+              </Dialog>
+            )}
+          </Dialog>
+        ) : null
+      }
+      const user = userEvent.setup()
+      render(<Nested />)
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog', { name: '자식 창' })).not.toBeInTheDocument()
+      expect(screen.getByRole('dialog', { name: '부모 창' })).toBeInTheDocument()
+    })
+
+    it('아래 창만 먼저 닫히면 포커스를 옮기지 않고, 위 창을 닫을 때 맨 처음 연 자리로 돌아간다', async () => {
+      /** 페이지가 두 창을 형제로 따로 들고 있다가 아래 창만 치우는 경우 */
+      const Siblings = () => {
+        const [lower, setLower] = useState(false)
+        const [upper, setUpper] = useState(false)
+        return (
+          <>
+            <button type="button" onClick={() => setLower(true)}>
+              배경 열기
+            </button>
+            {lower && (
+              <Dialog
+                title="아래 창"
+                onClose={() => setLower(false)}
+                actions={
+                  <button type="button" onClick={() => setUpper(true)}>
+                    위 창 열기
+                  </button>
+                }
+              >
+                <p>본문</p>
+              </Dialog>
+            )}
+            {upper && (
+              <Dialog
+                title="위 창"
+                onClose={() => setUpper(false)}
+                actions={
+                  <button type="button" onClick={() => setLower(false)}>
+                    아래 창 치우기
+                  </button>
+                }
+              >
+                <p>확인할까요?</p>
+              </Dialog>
+            )}
+          </>
+        )
+      }
+      const user = userEvent.setup()
+      render(<Siblings />)
+      const background = screen.getByRole('button', { name: '배경 열기' })
+      await user.click(background)
+      await user.click(screen.getByRole('button', { name: '위 창 열기' }))
+
+      const removeLower = screen.getByRole('button', { name: '아래 창 치우기' })
+      await user.click(removeLower)
+      expect(screen.queryByRole('dialog', { name: '아래 창' })).not.toBeInTheDocument()
+      // 위 창이 열려 있다 — 포커스가 배경으로 빠지지 않는다
+      expect(removeLower).toHaveFocus()
+
+      // 위 창을 연 버튼은 아래 창과 함께 사라졌다 — 아래 창을 연 자리로 돌아간다
+      await user.keyboard('{Escape}')
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(background).toHaveFocus()
+    })
+  })
+
+  describe('긴 서버 오류', () => {
+    // jsdom은 레이아웃을 재지 않는다 — 높이를 정해 넘침 여부를 흉내 낸다
+    const mockHeights = (scrollHeight: number, clientHeight: number) => {
+      vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(scrollHeight)
+      vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(clientHeight)
+    }
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('넘치면 Tab으로 닿는다 — 키보드로 나머지를 스크롤할 수 있다', async () => {
+      mockHeights(120, 63)
+      await openDialog()
+      expect(screen.getByRole('alert')).toHaveAttribute('tabindex', '0')
+    })
+
+    it('넘치지 않으면 Tab 정거장을 만들지 않는다', async () => {
+      mockHeights(21, 63)
+      await openDialog()
+      expect(screen.getByRole('alert')).not.toHaveAttribute('tabindex')
     })
   })
 })
