@@ -226,10 +226,13 @@ describe('RoutinesPage', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByRole('button', { name: '취소' })).toHaveFocus()
 
+    // 순서: 머리말 닫기 → 취소 → 삭제. 양 끝에서 안으로 돈다
+    await user.tab({ shift: true })
+    expect(within(dialog).getByRole('button', { name: '닫기' })).toHaveFocus()
     await user.tab({ shift: true })
     expect(within(dialog).getByRole('button', { name: '삭제' })).toHaveFocus()
     await user.tab()
-    expect(within(dialog).getByRole('button', { name: '취소' })).toHaveFocus()
+    expect(within(dialog).getByRole('button', { name: '닫기' })).toHaveFocus()
   })
 
   it('템플릿 수정 — 안내 문구를 보여 주고, 정의 5필드를 보낸다', async () => {

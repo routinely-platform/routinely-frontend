@@ -1,0 +1,211 @@
+/*
+ * 공용 대화상자 — 머리말(제목 + 닫기) · 본문 · 버튼 줄.
+ * 길어지면 본문만 스크롤한다. 머리말과 버튼 줄은 항상 화면 안에 있다
+ */
+
+.backdrop {
+  /* 한글이 단어 중간에서 줄바꿈되지 않게 한다 ("남 / 아요") */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(20, 18, 12, 0.45);
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 420px;
+  /* dvh — 모바일 주소창을 뺀 실제 높이. 100vh는 주소창만큼 화면보다 커서 버튼 줄이 밀린다.
+     앞 줄은 dvh를 모르는 브라우저용 대체값이다 */
+  max-height: calc(100vh - 48px);
+  max-height: calc(100dvh - 48px);
+  /* 둥근 모서리 밖으로 본문 스크롤이 비치지 않게 한다 */
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
+}
+
+/* 포커스를 받는 대화상자 자체에는 테두리를 그리지 않는다 — 안쪽 요소가 키보드 포커스를 보여 준다 */
+.dialog:focus {
+  outline: none;
+}
+
+/* 입력이 들어가는 넓은 대화상자 */
+.wide {
+  max-width: 640px;
+}
+
+/* ── 머리말 ── */
+.header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px 20px 12px 28px;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.closeButton {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  /* 제목 첫 줄(21px)과 가운데를 맞춘다 */
+  margin-top: -2px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.closeButton:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.closeButton:focus-visible {
+  outline: 2px solid var(--coral-500);
+  outline-offset: 2px;
+}
+
+.closeButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.closeButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* ── 폼 — 본문과 버튼 줄을 함께 감싼다. 저장 버튼이 폼 안에 남아 Enter 제출이 그대로 동작한다 ── */
+.form {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  /* flex 자식은 기본 min-height가 내용 높이라 줄지 않는다 — 0이 없으면 본문 대신 대화상자가 넘친다 */
+  min-height: 0;
+}
+
+/* ── 본문 — 여기만 스크롤한다 ── */
+.content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  /* 본문 끝에 닿아도 배경 화면이 이어서 스크롤되지 않게 한다 */
+  overscroll-behavior: contain;
+  padding: 0 28px 4px;
+}
+
+/* ── 버튼 줄 ── */
+.footer {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 28px 24px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* 서버 오류 한 줄 — 버튼 줄과 함께 고정이라 본문 스크롤 위치와 상관없이 보인다 */
+.error {
+  /* 세 줄까지 — 넘치면 이 안에서 스크롤한다. 버튼 줄은 줄지 않으므로 긴 오류가 버튼을 밀어내지 않게 막는다 */
+  max-height: calc(1.5em * 3);
+  overflow-y: auto;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
+/* Tab으로 닿는다(DialogError) — 키보드 사용자에게 어디를 스크롤하는지 보여 준다 */
+.error:focus-visible {
+  outline: 2px solid var(--coral-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 넓은(스크롤되는) 대화상자 — 경계선이 "본문이 따로 스크롤된다"를 보여 준다.
+   macOS · iOS는 스크롤바가 평소에 숨어 있어 이것이 유일한 단서다 */
+.wide .header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.wide .content {
+  padding-top: 20px;
+  padding-bottom: 24px;
+}
+
+.wide .footer {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── 본문 안 조각 ── */
+
+/* 설명 문단 */
+.description {
+  margin: 0;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+/* 설명 문단 아래에 이어지는 입력 묶음 */
+.description + .fields {
+  margin-top: 24px;
+}
+
+@media (max-width: 480px) {
+  .backdrop {
+    padding: 12px;
+  }
+
+  .dialog {
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .header {
+    padding: 20px 14px 12px 20px;
+  }
+
+  .content {
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+
+  .footer {
+    padding: 16px 20px 20px;
+  }
+}
