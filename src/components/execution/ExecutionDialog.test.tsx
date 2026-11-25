@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { completeExecution } from '@/api/execution'
 import { apiError } from '@/test/axiosError'
 import type { Routine } from '@/types/routine'
+import { COMPOSITION_END_GRACE_MS } from '@/utils/ime'
 import ExecutionDialog from './ExecutionDialog'
 import { MAX_EXECUTION_PHOTO_BYTES, PHOTO_MESSAGES } from './executionPhoto'
 
@@ -230,6 +231,45 @@ describe('ExecutionDialog — 인증 모달', () => {
 
       await user.click(screen.getByRole('button', { name: '인증 완료' }))
       expect(mockedComplete).toHaveBeenCalledWith(1, '2026-11-06', { photo: null, memo: '좋았다' })
+    })
+
+    /**
+     * Safari 실측(2026-11-26) — textarea에서 조합 이벤트가 없다.
+     * "기" 입력 뒤 Esc 한 번: insertReplacementText("기") 확정 → 1~2ms 뒤 keydown(27, isComposing: false)
+     */
+    const typeGiThenEscapeInSafari = (memo: HTMLElement) => {
+      const input = (inputType: string, data: string) => {
+        fireEvent.change(memo, { target: { value: data } })
+        memo.dispatchEvent(new InputEvent('input', { bubbles: true, inputType, data }))
+      }
+      input('insertText', 'ㄱ')
+      fireEvent.keyDown(memo, { key: 'ㄱ', keyCode: 229 })
+      input('insertReplacementText', '기')
+      fireEvent.keyDown(memo, { key: 'ㅣ', keyCode: 229 })
+      // Esc — IME가 먼저 확정하고 일반 Esc가 온다
+      input('insertReplacementText', '기')
+      fireEvent.keyDown(memo, { key: 'Escape', keyCode: 27 })
+    }
+
+    it('Safari — 한글을 쓰다 Esc를 한 번 누르면 조합만 확정되고 모달은 닫히지 않는다 (D16)', () => {
+      renderDialog()
+      const memo = screen.getByLabelText(/메모/)
+
+      typeGiThenEscapeInSafari(memo)
+
+      expect(onClose).not.toHaveBeenCalled()
+      expect(screen.getByRole('dialog')).toBeInTheDocument()
+    })
+
+    it('Safari — 확정하고 잠시 뒤 누른 Esc는 모달을 닫는다', async () => {
+      renderDialog()
+      const memo = screen.getByLabelText(/메모/)
+
+      typeGiThenEscapeInSafari(memo)
+      await act(() => new Promise((resolve) => setTimeout(resolve, COMPOSITION_END_GRACE_MS + 50)))
+      fireEvent.keyDown(memo, { key: 'Escape', keyCode: 27 })
+
+      expect(onClose).toHaveBeenCalledTimes(1)
     })
   })
 
