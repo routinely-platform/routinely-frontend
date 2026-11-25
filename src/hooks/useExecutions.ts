@@ -1,6 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
-import { getExecutions } from '@/api/execution'
+import {
+  cancelExecution,
+  completeExecution,
+  getExecutions,
+  type CompleteExecutionInput,
+} from '@/api/execution'
+import { executionErrorCode, STALE_CACHE_CODES } from '@/components/execution/executionErrors'
 import type { Routine } from '@/types/routine'
 import { monthRange } from '@/utils/calendar'
 import { addDays } from '@/utils/routine'
@@ -56,5 +62,68 @@ export function useCompletedExecutions(routine: Routine | null | undefined, toda
       })
     },
     enabled: !!routine,
+  })
+}
+
+// ─── 완료 · 취소 ────────────────────────────────────────────────────────
+
+/**
+ * 실행 기록 전부를 다시 받는다 — 접두사 `['executions']` 하나로 루틴 상세 달력 · 최근 인증이 함께 따라오고,
+ * 같은 접두사를 쓰는 화면(홈 · 통계)이 생기면 그대로 따라온다.
+ * 캐시를 응답으로 직접 고치지 않는다 — 취소한 날이 PENDING인지 MISSED인지, 다시 인증할 수 있는지(`backfillable`)는
+ * 서버가 파생한다. 클라이언트가 계산하면 그 규칙을 복제하게 된다 (WORKPLAN D7)
+ */
+const refreshExecutions = (queryClient: QueryClient) =>
+  // 활성 쿼리 refetch가 실패해도 reject하지 않는다 — 완료 자체는 성공했으니 오류로 바꾸지 않는다
+  queryClient.invalidateQueries({ queryKey: EXECUTIONS_QUERY_KEY })
+
+/**
+ * 다시 받은 뒤 화면에 걸린 실행 기록 쿼리가 모두 최신인가.
+ * 하나라도 실패했으면 그 화면은 저장 전 데이터를 그대로 들고 있다 — 방금 바꾼 날짜의 버튼이 낡았다 (D13)
+ */
+const isRefreshed = (queryClient: QueryClient) =>
+  queryClient
+    .getQueryCache()
+    .findAll({ queryKey: EXECUTIONS_QUERY_KEY, type: 'active' })
+    .every((query) => query.state.status !== 'error')
+
+/** 완료 · 취소 결과 — 저장은 성공했다. `refreshed`가 false면 화면이 아직 저장 전 상태다 */
+export interface ExecutionChangeResult {
+  refreshed: boolean
+}
+
+/**
+ * 저장 → 다시 받기를 한 요청처럼 묶는다 — 다시 받기가 끝날 때까지 isPending이 유지돼
+ * 성공 화면이 뜰 때 달력이 이미 바뀌어 있다(D7). 다시 받기 실패는 오류가 아니라 결과의 `refreshed`로 알린다
+ */
+const changeThenRefresh = async (
+  queryClient: QueryClient,
+  change: () => Promise<unknown>
+): Promise<ExecutionChangeResult> => {
+  await change()
+  await refreshExecutions(queryClient)
+  return { refreshed: isRefreshed(queryClient) }
+}
+
+/** 다른 곳에서 먼저 인증 · 취소해 캐시가 낡았다 — 오류는 보이고, 달력은 서버 상태로 돌린다 (D9) */
+const refreshIfStale = (queryClient: QueryClient, error: unknown) => {
+  const code = executionErrorCode(error)
+  if (code && STALE_CACHE_CODES.has(code)) void refreshExecutions(queryClient)
+}
+
+export function useCompleteExecution(routineId: number, date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CompleteExecutionInput) =>
+      changeThenRefresh(queryClient, () => completeExecution(routineId, date, input)),
+    onError: (error) => refreshIfStale(queryClient, error),
+  })
+}
+
+export function useCancelExecution(routineId: number, date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => changeThenRefresh(queryClient, () => cancelExecution(routineId, date)),
+    onError: (error) => refreshIfStale(queryClient, error),
   })
 }
