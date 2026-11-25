@@ -76,3 +76,15 @@ export const CELL_LABEL: Record<CalendarCellState, string> = {
   upcoming: '예정',
   blank: '기간 밖',
 }
+
+/**
+ * 이 날짜를 지금 인증할 수 있나 — 달력 칸 · "오늘 인증하기"가 같은 판정을 쓴다.
+ * 서버가 준 행이 있으면 `backfillable`만 본다(완료한 날은 아니다).
+ * 행이 없는 날은 빈도형의 지난 날뿐이다(서버가 결석으로 파생하지 않는다). 그 경우:
+ * - 진행 중인 개인 루틴 — 서버 규칙상 창 제한이 없어 인증할 수 있다
+ * - 챌린지 루틴 — 3일 창 안인지 서버 값이 없다. 날짜로 재지 않고 막는다(누르게 했다가 400을 받지 않게)
+ */
+export function canCompleteDate(routine: Routine, execution: Execution | undefined): boolean {
+  if (execution) return execution.status !== 'COMPLETED' && execution.backfillable
+  return routine.isActive && routine.challengeId === null
+}

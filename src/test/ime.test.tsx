@@ -16,6 +16,7 @@ import RoutinesPage from '@/pages/RoutinesPage'
 import SignupPage from '@/pages/SignupPage'
 import type { RoutineTemplate } from '@/types/routine'
 import type { MyProfile } from '@/types/user'
+import { serverToday } from '@/utils/routine'
 import { expectImeSafe, findTextInputs, labelOf } from './ime'
 
 vi.mock('@/api/auth', () => ({ postLogin: vi.fn(), postSignup: vi.fn() }))
@@ -35,7 +36,11 @@ vi.mock('@/api/routine', () => ({
   updateRoutine: vi.fn(),
   stopRoutine: vi.fn(),
 }))
-vi.mock('@/api/execution', () => ({ getExecutions: vi.fn() }))
+vi.mock('@/api/execution', () => ({
+  getExecutions: vi.fn(),
+  completeExecution: vi.fn(),
+  cancelExecution: vi.fn(),
+}))
 vi.mock('@/api/category', () => ({ getCategories: vi.fn() }))
 
 const TEMPLATE: RoutineTemplate = {
@@ -175,6 +180,59 @@ const SCENARIOS: ImeScenario[] = [
     },
     open: async () => {
       await userEvent.setup().click(await screen.findByRole('button', { name: '설정 수정' }))
+      await screen.findByRole('dialog')
+    },
+  },
+  {
+    // 메모 — 사진을 고르거나(부모 재렌더) 글자 수 카운터가 메모를 구독해도 textarea는 그대로여야 한다
+    name: '인증 모달',
+    files: ['/src/components/execution/ExecutionDialog.tsx'],
+    render: () => {
+      const today = serverToday()
+      vi.mocked(getMyRoutines).mockResolvedValue([
+        {
+          routineId: 1,
+          routineTemplateId: null,
+          title: '아침 러닝',
+          challengeId: null,
+          startedAt: '2026-10-01',
+          endedAt: null,
+          isActive: true,
+          categoryCode: 'EXERCISE',
+          scheduleType: 'DAILY',
+          daysOfWeek: null,
+          targetCount: null,
+        },
+      ])
+      // 오늘이 미완료 — "오늘 인증하기"가 뜬다
+      vi.mocked(getExecutions).mockImplementation(async (params) =>
+        params.status === 'COMPLETED'
+          ? []
+          : [
+              {
+                executionId: null,
+                routineId: 1,
+                title: '아침 러닝',
+                scheduledDate: today,
+                status: 'PENDING',
+                completedAt: null,
+                photoUrl: null,
+                memo: null,
+                feedCardId: null,
+                backfillable: true,
+              },
+            ]
+      )
+      return withQuery(
+        <MemoryRouter initialEntries={['/routines/1']}>
+          <Routes>
+            <Route path="/routines/:id" element={<RoutineDetailPage />} />
+          </Routes>
+        </MemoryRouter>
+      )
+    },
+    open: async () => {
+      await userEvent.setup().click(await screen.findByRole('button', { name: '✓ 오늘 인증하기' }))
       await screen.findByRole('dialog')
     },
   },

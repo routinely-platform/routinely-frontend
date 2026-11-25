@@ -124,15 +124,37 @@
   list-style: none;
 }
 
-.recentItem {
+.recentItem + .recentItem {
+  border-top: 1px solid var(--border);
+}
+
+/* 누르면 인증 상세 — 항목 전체가 버튼이다 */
+.recentButton {
   display: flex;
   align-items: center;
   gap: 12px;
+  width: 100%;
   padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.recentItem + .recentItem {
-  border-top: 1px solid var(--border);
+.recentButton:hover {
+  background: var(--surface-2);
+}
+
+.recentButton:focus-visible {
+  outline: 2px solid var(--coral-500);
+  outline-offset: -2px;
+}
+
+.recentChevron {
+  flex-shrink: 0;
+  color: var(--text-dim);
 }
 
 .recentThumb {
@@ -197,6 +219,11 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+/* 사이드 맨 위 주 동작 — 오늘 할 일 */
+.todayButton {
+  width: 100%;
 }
 
 .settings {
@@ -325,4 +352,25 @@
   margin: 0;
   font-size: 15px;
   color: var(--text-muted);
+}
+
+/* 데이터는 있는데 다시 받기가 실패했다 — 화면은 남기고 낡았다는 것만 알린다 */
+.staleNotice {
+  margin: 0 0 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+/* 제목은 포커스 복귀 자리일 뿐이라(tabIndex -1) 테두리를 그리지 않는다 */
+.sectionTitle:focus {
+  outline: none;
+}
+
+.recentButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
 }

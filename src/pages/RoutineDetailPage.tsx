@@ -1,5 +1,7 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
+import ExecutionDetailDialog from '@/components/execution/ExecutionDetailDialog'
+import ExecutionDialog from '@/components/execution/ExecutionDialog'
 import EditRoutineDialog from '@/components/routine/EditRoutineDialog'
 import RoutineCalendar from '@/components/routine/RoutineCalendar'
 import StopRoutineDialog from '@/components/routine/StopRoutineDialog'
@@ -21,8 +23,14 @@ import type { Execution } from '@/types/execution'
 import type { Routine, RoutineStatus } from '@/types/routine'
 import { cn } from '@/utils/cn'
 import { formatFullDate, formatShortDate, isMonth, monthOf } from '@/utils/calendar'
-import { classifyCalendarDay, type CalendarCellState } from '@/utils/calendarCell'
-import { addDays, deriveRoutineStatus, scheduleLabel, serverToday } from '@/utils/routine'
+import { canCompleteDate, classifyCalendarDay, type CalendarCellState } from '@/utils/calendarCell'
+import {
+  addDays,
+  deriveRoutineStatus,
+  formatMonthDay,
+  scheduleLabel,
+  serverToday,
+} from '@/utils/routine'
 import NotFoundPage from './NotFoundPage'
 import styles from './RoutineDetailPage.module.css'
 
@@ -33,6 +41,31 @@ const STATUS_META: Record<RoutineStatus, { label: string; className: string }> =
 }
 
 const RECENT_COUNT = 3
+
+/** 열려 있는 인증 대화상자 — 인증 모달(날짜) 또는 인증 상세(완료한 기록) */
+type ExecutionTarget = { kind: 'complete'; date: string } | { kind: 'detail'; execution: Execution }
+
+/**
+ * 저장은 됐는데 다시 받지 못한 날짜 → 잠근 시각 (D13).
+ * 그 날짜를 그리는 쿼리가 이 시각보다 새로 받아질 때까지 버튼을 막는다 — 낡은 버튼으로 같은 요청을 다시 보내지 않게.
+ * 쿼리마다(이번 달 · 보는 달 · 최근 인증) 자기 `dataUpdatedAt`으로 따로 판정하므로 따로 지우지 않아도 된다
+ */
+type StaleLocks = ReadonlyMap<string, number>
+
+const isLocked = (locks: StaleLocks, date: string, dataUpdatedAt: number) => {
+  const lockedAt = locks.get(date)
+  return lockedAt !== undefined && dataUpdatedAt <= lockedAt
+}
+
+/** 데이터는 있는데 다시 받기가 실패했다 — 화면은 남기고 낡았다는 것만 알린다 (D13) */
+const StaleNotice = ({ onRetry }: { onRetry: () => void }) => (
+  <p className={styles.staleNotice} role="alert">
+    최신 기록을 불러오지 못했어요. 방금 바꾼 날짜는 다시 불러온 뒤에 누를 수 있어요.{' '}
+    <button type="button" className={styles.inlineButton} onClick={onRetry}>
+      다시 시도
+    </button>
+  </p>
+)
 
 /** 범례 — 루틴 유형에 없는 상태는 싣지 않는다 */
 function legendFor(routine: Routine): CalendarCellState[] {
@@ -82,9 +115,11 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
 interface CalendarSectionProps {
   routine: Routine
   today: string
+  locks: StaleLocks
+  onOpen: (target: ExecutionTarget) => void
 }
 
-const CalendarSection = ({ routine, today }: CalendarSectionProps) => {
+const CalendarSection = ({ routine, today, locks, onOpen }: CalendarSectionProps) => {
   const [searchParams, setSearchParams] = useSearchParams()
   const minMonth = monthOf(routine.startedAt)
   const maxMonth = monthOf(today) > minMonth ? monthOf(today) : minMonth
@@ -103,9 +138,11 @@ const CalendarSection = ({ routine, today }: CalendarSectionProps) => {
 
   return (
     <section className={styles.section} aria-labelledby="calendar-heading">
-      <h2 id="calendar-heading" className={styles.sectionTitle}>
+      {/* tabIndex -1 — 대화상자를 연 칸이 사라졌을 때 포커스가 돌아올 자리 (D12) */}
+      <h2 id="calendar-heading" className={styles.sectionTitle} tabIndex={-1}>
         인증 달력
       </h2>
+      {query.isError && query.data && <StaleNotice onRetry={() => void query.refetch()} />}
       <RoutineCalendar
         month={month}
         // 새로고침해도 보던 달이 남는다. 달마다 기록을 쌓으면 뒤로 가기가 달을 하나씩 되감는다 — 바꿔 쓴다
@@ -127,8 +164,17 @@ const CalendarSection = ({ routine, today }: CalendarSectionProps) => {
         onRetry={() => void query.refetch()}
         getCellState={(date) => classifyCalendarDay(date, routine, byDate.get(date), today)}
         legend={legendFor(routine)}
-        // onDateClick은 넘기지 않는다 — 인증 모달 · 인증 상세는 #20이 배선한다 (#63 결정 4-A)
-        // renderWeekAside(주 게이지)도 넘기지 않는다 — #60 주별 집계 뒤에 켠다
+        // 달력을 대칭으로 쓴다 — 완료한 날은 인증 상세(→ 취소), 아닌 날은 인증 모달(백필) (screens §6)
+        isDateClickable={(date, state) =>
+          !isLocked(locks, date, query.dataUpdatedAt) &&
+          (state === 'completed' || canCompleteDate(routine, byDate.get(date)))
+        }
+        onDateClick={(date, state) => {
+          const execution = byDate.get(date)
+          if (state === 'completed' && execution) onOpen({ kind: 'detail', execution })
+          else onOpen({ kind: 'complete', date })
+        }}
+        // renderWeekAside(주 게이지)는 넘기지 않는다 — #60 주별 집계 뒤에 켠다
       />
     </section>
   )
@@ -145,34 +191,52 @@ const completedTime = (execution: Execution) =>
     ? execution.completedAt.slice(11, 16)
     : null
 
-const RecentItem = ({ execution, today }: { execution: Execution; today: string }) => {
+interface RecentItemProps {
+  execution: Execution
+  today: string
+  /** 방금 취소했는데 다시 받지 못했다 — 이미 없는 기록이다 (D13) */
+  locked: boolean
+  onOpen: (target: ExecutionTarget) => void
+}
+
+const RecentItem = ({ execution, today, locked, onOpen }: RecentItemProps) => {
   const time = completedTime(execution)
   const firstLine = execution.memo?.split('\n')[0].trim()
 
   return (
-    // 누르면 인증 상세 — #20 몫이라 아직 눌리지 않는다
+    // 누르면 인증 상세 — 취소까지 이어진다 (screens §6)
     <li className={styles.recentItem}>
-      {execution.photoUrl ? (
-        <img className={styles.recentThumb} src={execution.photoUrl} alt="" />
-      ) : (
-        <span className={cn(styles.recentThumb, styles.recentCheck)} aria-hidden="true">
-          ✓
+      <button
+        type="button"
+        className={styles.recentButton}
+        onClick={() => onOpen({ kind: 'detail', execution })}
+        disabled={locked}
+      >
+        {execution.photoUrl ? (
+          <img className={styles.recentThumb} src={execution.photoUrl} alt="" />
+        ) : (
+          <span className={cn(styles.recentThumb, styles.recentCheck)} aria-hidden="true">
+            ✓
+          </span>
+        )}
+        <span className={styles.recentText}>
+          <span className={styles.recentHead}>
+            <b>{dateLabel(execution.scheduledDate, today)}</b>
+            {time && <span className={styles.recentTime}>{time}</span>}
+            {execution.photoUrl && (
+              <span className={styles.recentClip} aria-label="사진 있음">
+                📎
+              </span>
+            )}
+          </span>
+          <span className={cn(styles.recentMemo, !firstLine && styles.recentMemoEmpty)}>
+            {firstLine || '메모 없이 인증'}
+          </span>
         </span>
-      )}
-      <span className={styles.recentText}>
-        <span className={styles.recentHead}>
-          <b>{dateLabel(execution.scheduledDate, today)}</b>
-          {time && <span className={styles.recentTime}>{time}</span>}
-          {execution.photoUrl && (
-            <span className={styles.recentClip} aria-label="사진 있음">
-              📎
-            </span>
-          )}
+        <span className={styles.recentChevron} aria-hidden="true">
+          ›
         </span>
-        <span className={cn(styles.recentMemo, !firstLine && styles.recentMemoEmpty)}>
-          {firstLine || '메모 없이 인증'}
-        </span>
-      </span>
+      </button>
     </li>
   )
 }
@@ -180,11 +244,13 @@ const RecentItem = ({ execution, today }: { execution: Execution; today: string 
 interface RecentSectionProps {
   query: ReturnType<typeof useCompletedExecutions>
   today: string
+  locks: StaleLocks
+  onOpen: (target: ExecutionTarget) => void
   /** 조회가 시작일까지 닿지 못했나 — 비어 있어도 "아직 없다"고 단정하지 않는다 */
   truncated: boolean
 }
 
-const RecentSection = ({ query, today, truncated }: RecentSectionProps) => {
+const RecentSection = ({ query, today, truncated, locks, onOpen }: RecentSectionProps) => {
   const recent = query.data?.slice(0, RECENT_COUNT)
 
   return (
@@ -200,6 +266,7 @@ const RecentSection = ({ query, today, truncated }: RecentSectionProps) => {
           피드에서 보기 →
         </button>
       </div>
+      {query.isError && query.data && <StaleNotice onRetry={() => void query.refetch()} />}
       {recent === undefined ? (
         query.isError ? (
           <ErrorState
@@ -219,7 +286,13 @@ const RecentSection = ({ query, today, truncated }: RecentSectionProps) => {
         // 사진 그리드가 아니라 목록이다 — 사진은 선택이라 대부분의 인증에 사진이 없다
         <ul className={cn(shared.card, styles.recentList)}>
           {recent.map((execution) => (
-            <RecentItem key={execution.scheduledDate} execution={execution} today={today} />
+            <RecentItem
+              key={execution.scheduledDate}
+              execution={execution}
+              today={today}
+              locked={isLocked(locks, execution.scheduledDate, query.dataUpdatedAt)}
+              onOpen={onOpen}
+            />
           ))}
         </ul>
       )}
@@ -368,6 +441,41 @@ const StopNote = ({
   )
 }
 
+// ─── 오늘 인증하기 ─────────────────────────────────────────────────────
+
+/**
+ * 사이드 맨 위 — 오늘 아직 인증하지 않았고 오늘이 인증할 수 있는 날일 때만 둔다.
+ * 오늘의 행은 이번 달 조회에 있다(달력이 이번 달을 보고 있으면 같은 캐시다).
+ * 오늘 행이 없으면(지정형의 쉬는 요일 · 기간 밖 · 아직 못 받음) 버튼을 두지 않는다
+ */
+const TodayButton = ({
+  routine,
+  today,
+  locks,
+  onOpen,
+}: {
+  routine: Routine
+  today: string
+  locks: StaleLocks
+  onOpen: (target: ExecutionTarget) => void
+}) => {
+  const query = useMonthExecutions(routine.routineId, monthOf(today))
+  const todayExecution = query.data?.find((e) => e.scheduledDate === today)
+  if (!todayExecution || !canCompleteDate(routine, todayExecution)) return null
+  // 방금 인증했는데 다시 받지 못했다 — 낡은 버튼으로 다시 보내지 않게 감춘다 (D13)
+  if (isLocked(locks, today, query.dataUpdatedAt)) return null
+
+  return (
+    <button
+      type="button"
+      className={cn(shared.btn, shared.btnPrimary, styles.todayButton)}
+      onClick={() => onOpen({ kind: 'complete', date: today })}
+    >
+      ✓ 오늘 인증하기
+    </button>
+  )
+}
+
 // ─── 화면 ──────────────────────────────────────────────────────────────
 
 const RoutineDetail = ({ routine }: { routine: Routine }) => {
@@ -379,6 +487,35 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
   const completedQuery = useCompletedExecutions(routine, today)
   const [editLock, setEditLock] = useState<RoutineEditLock | null>(null)
   const [stopping, setStopping] = useState(false)
+  const [target, setTarget] = useState<ExecutionTarget | null>(null)
+  const [locks, setLocks] = useState<StaleLocks>(new Map())
+  const lockDate = (date: string) => setLocks((prev) => new Map(prev).set(date, Date.now()))
+
+  /**
+   * 대화상자를 연 자리가 닫는 사이 사라질 수 있다 — 인증하면 "오늘 인증하기"가, 취소하면 최근 인증 항목이 없어진다.
+   * 공용 훅(useDialogFocus)은 연 자리가 남아 있을 때만 돌려주므로, 포커스가 body에 남았으면 여기서 옮긴다:
+   * 같은 날짜의 달력 칸 → 달력 제목 (D12)
+   */
+  const calendarRef = useRef<HTMLDivElement>(null)
+  const returnFocusDate = useRef<string | null>(null)
+  const closeTarget = () => {
+    if (target) {
+      returnFocusDate.current =
+        target.kind === 'complete' ? target.date : target.execution.scheduledDate
+    }
+    setTarget(null)
+  }
+  // 닫힌 대화상자의 정리(연 자리로 포커스)가 끝난 뒤에 돈다 — React는 지우는 effect를 먼저 모두 돌린다
+  useEffect(() => {
+    const date = returnFocusDate.current
+    if (target !== null || date === null) return
+    returnFocusDate.current = null
+    if (document.activeElement && document.activeElement !== document.body) return
+    const root = calendarRef.current
+    const cell = root?.querySelector<HTMLElement>(`button[aria-label^="${formatMonthDay(date)} "]`)
+    const heading = root?.querySelector<HTMLElement>('#calendar-heading')
+    ;(cell ?? heading)?.focus()
+  }, [target])
 
   return (
     <div className={styles.split}>
@@ -406,15 +543,22 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
         </div>
         {/* 스트릭 · 최장 스트릭 · 달성률은 자리를 만들지 않는다 — 통계 API(#60) 뒤에 붙인다 (#63 결정 2-A) */}
 
-        <CalendarSection routine={routine} today={today} />
+        <div ref={calendarRef}>
+          <CalendarSection routine={routine} today={today} locks={locks} onOpen={setTarget} />
+        </div>
         <RecentSection
           query={completedQuery}
           today={today}
           truncated={isLookbackTruncated(routine, today)}
+          locks={locks}
+          onOpen={setTarget}
         />
       </div>
 
       <aside className={styles.aside}>
+        {status === 'ongoing' && (
+          <TodayButton routine={routine} today={today} locks={locks} onOpen={setTarget} />
+        )}
         <SettingsCard
           routine={routine}
           categoryName={category?.name ?? routine.categoryCode}
@@ -429,6 +573,27 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
         <EditRoutineDialog routine={routine} lock={editLock} onClose={() => setEditLock(null)} />
       )}
       {stopping && <StopRoutineDialog routine={routine} onClose={() => setStopping(false)} />}
+      {target?.kind === 'complete' && (
+        <ExecutionDialog
+          // 다른 날짜를 열면 새 모달이다 — 사진 · 메모 · 단계가 이어지지 않게
+          key={target.date}
+          routine={routine}
+          date={target.date}
+          today={today}
+          onClose={closeTarget}
+          onStale={lockDate}
+        />
+      )}
+      {target?.kind === 'detail' && (
+        <ExecutionDetailDialog
+          key={target.execution.scheduledDate}
+          routine={routine}
+          execution={target.execution}
+          today={today}
+          onClose={closeTarget}
+          onStale={lockDate}
+        />
+      )}
     </div>
   )
 }

@@ -72,3 +72,10 @@ export function formatShortDate(date: string, today: string): string {
   const [, m, d] = date.split('-').map(Number)
   return `${m}월 ${d}일`
 }
+
+const WEEKDAY_SHORT = ['일', '월', '화', '수', '목', '금', '토']
+
+/** "8월 20일(화)" — 올해가 아니면 연도를 붙인다. 백필 날짜를 오늘과 헷갈리지 않게 요일까지 적는다(screens §7) */
+export function formatDateWithWeekday(date: string, today: string): string {
+  return `${formatShortDate(date, today)}(${WEEKDAY_SHORT[dayOfWeek(date)]})`
+}

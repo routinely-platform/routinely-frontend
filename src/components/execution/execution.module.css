@@ -1,0 +1,242 @@
+/* 인증 모달 · 성공 · 인증 상세 · 취소 확인창이 함께 쓴다 */
+
+/* 머리말 아래 첫 줄 — 대상 날짜 · 상태 */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* 백필 날짜 — 오늘과 구분되어야 한다 */
+.badgeBackfill {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badgeDone {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.note {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.note b {
+  font-weight: 700;
+}
+
+.noteWarn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.noteInfo {
+  background: var(--surface-2);
+  color: var(--text-muted);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ── 사진 ── */
+
+/* 실제 입력은 숨기고 버튼으로 연다 — 라벨 · 키보드 포커스는 버튼이 받는다 */
+.fileInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 24px 16px;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.picker:hover:not(:disabled) {
+  border-color: var(--coral-500);
+  color: var(--text);
+}
+
+.picker:focus-visible,
+.photoAction:focus-visible {
+  outline: 2px solid var(--coral-500);
+  outline-offset: 2px;
+}
+
+.picker:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.pickerIcon {
+  font-size: 24px;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 세로 사진이 대화상자를 밀어내지 않게 높이를 묶는다 — 375px에서도 버튼 줄이 화면 안에 있다 */
+.previewImage {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.photoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.photoAction {
+  padding: 6px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.photoAction:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.textarea {
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+/* 버튼 줄 아래 한 줄 — 사진이 선택이라는 것을 말한다 */
+.submitHint {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-dim);
+  text-align: right;
+}
+
+/* ── 성공 ── */
+.success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0 4px;
+  text-align: center;
+}
+
+.successEmoji {
+  font-size: 56px;
+  line-height: 1;
+}
+
+.successSub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.successNote {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--text-dim);
+}
+
+/* ── 인증 상세 ── */
+.detailPhoto {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.memo {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.memoEmpty {
+  color: var(--text-dim);
+}
+
+/* ── 취소 확인창 ── */
+.effects {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  list-style: none;
+}
+
+.effect {
+  display: flex;
+  gap: 10px;
+  padding: 12px 0;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.effect + .effect {
+  border-top: 1px solid var(--border);
+}
+
+.dangerOutline {
+  color: var(--danger);
+}
