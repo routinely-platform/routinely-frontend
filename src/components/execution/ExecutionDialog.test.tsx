@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { completeExecution } from '@/api/execution'
-import { apiError } from '@/test/axiosError'
+import { apiError, networkError } from '@/test/axiosError'
 import type { Routine } from '@/types/routine'
 import { COMPOSITION_END_GRACE_MS } from '@/utils/ime'
 import ExecutionDialog from './ExecutionDialog'
@@ -349,6 +349,33 @@ describe('ExecutionDialog — 인증 모달', () => {
         await screen.findByRole('dialog', { name: '지난 날짜를 채웠어요' })
       ).toBeInTheDocument()
       expect(mockedComplete).toHaveBeenCalledTimes(2)
+    })
+
+    it('[사진 빼기]는 그 사진 때문에 난 서버 오류도 지운다 (D19)', async () => {
+      mockedComplete.mockRejectedValueOnce(
+        apiError(400, { success: false, errorCode: 'UNSUPPORTED_IMAGE_TYPE', message: 'x' })
+      )
+      const { user } = renderDialog()
+      await user.upload(photoInput(), photoOf('image/png'))
+      await user.click(screen.getByRole('button', { name: '인증 완료' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('사진 파일이 맞는지')
+
+      await user.click(screen.getByRole('button', { name: '사진 빼기' }))
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+      expect(screen.getByText('사진 없이 기록돼요')).toBeInTheDocument()
+    })
+
+    it('[사진 빼기]는 사진과 상관없는 오류(연결)는 남긴다', async () => {
+      mockedComplete.mockRejectedValueOnce(networkError())
+      const { user } = renderDialog()
+      await user.upload(photoInput(), photoOf('image/png'))
+      await user.click(screen.getByRole('button', { name: '인증 완료' }))
+      expect(await screen.findByRole('alert')).toHaveTextContent('연결이 불안정해요')
+
+      await user.click(screen.getByRole('button', { name: '사진 빼기' }))
+
+      expect(screen.getByRole('alert')).toHaveTextContent('연결이 불안정해요')
     })
 
     it('VALIDATION_FAILED — 서버 문구 그대로', async () => {

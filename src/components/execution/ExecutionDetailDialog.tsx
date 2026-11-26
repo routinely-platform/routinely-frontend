@@ -16,9 +16,9 @@ interface ExecutionDetailDialogProps {
   today: string
   onClose: () => void
   /**
-   * 저장은 됐는데 화면의 기록을 다시 받지 못했다 — 부르는 쪽이 그 날짜의 낡은 버튼을 막는다 (D13)
+   * 저장이 끝났다 — 부르는 쪽이 이 날짜를 그리는 쿼리마다 `savedAt` 뒤에 새로 받았는지 보고 낡은 버튼을 막는다 (D17)
    */
-  onStale?: (date: string) => void
+  onSaved?: (date: string, savedAt: number) => void
 }
 
 /**
@@ -30,7 +30,7 @@ const ExecutionDetailDialog = ({
   execution,
   today,
   onClose,
-  onStale,
+  onSaved,
 }: ExecutionDetailDialogProps) => {
   const [confirming, setConfirming] = useState(false)
 
@@ -85,8 +85,8 @@ const ExecutionDetailDialog = ({
           today={today}
           onClose={() => setConfirming(false)}
           // 기록이 사라졌다 — 상세도 함께 닫는다
-          onCancelled={(refreshed) => {
-            if (!refreshed) onStale?.(execution.scheduledDate)
+          onCancelled={(savedAt) => {
+            onSaved?.(execution.scheduledDate, savedAt)
             onClose()
           }}
         />
@@ -100,8 +100,8 @@ interface CancelExecutionDialogProps {
   execution: Execution
   today: string
   onClose: () => void
-  /** 취소가 저장됐다 — `refreshed`가 false면 화면의 기록을 다시 받지 못했다 */
-  onCancelled: (refreshed: boolean) => void
+  /** 취소가 저장됐다 — `savedAt`은 저장 직후 · 다시 받기 전 시각 */
+  onCancelled: (savedAt: number) => void
 }
 
 /**
@@ -168,9 +168,7 @@ const CancelExecutionDialog = ({
           <button
             type="button"
             className={cn(shared.btn, shared.btnDanger, shared.btnSm)}
-            onClick={() =>
-              mutate(undefined, { onSuccess: ({ refreshed }) => onCancelled(refreshed) })
-            }
+            onClick={() => mutate(undefined, { onSuccess: ({ savedAt }) => onCancelled(savedAt) })}
             disabled={isPending}
           >
             {isPending ? '취소하는 중...' : '인증 취소하기'}

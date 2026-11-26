@@ -33,6 +33,14 @@ const SERVER_MESSAGE_CODES = new Set([
 
 export const NETWORK_MESSAGE = '연결이 불안정해요. 다시 시도해 주세요.'
 
+/** 보낸 사진 때문에 난 오류 — 사진을 빼면 함께 지운다 */
+export const PHOTO_ERROR_CODES = new Set([
+  'FILE_SIZE_EXCEEDED',
+  'UNSUPPORTED_IMAGE_TYPE',
+  'EMPTY_FILE',
+  'FILE_UPLOAD_FAILED',
+])
+
 /** 캐시가 낡아서 난 오류 — 다시 받으면 달력이 서버 상태로 돌아온다(WORKPLAN D9) */
 export const STALE_CACHE_CODES = new Set(['EXECUTION_ALREADY_COMPLETED', 'EXECUTION_NOT_FOUND'])
 

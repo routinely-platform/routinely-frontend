@@ -78,32 +78,35 @@ const refreshExecutions = (queryClient: QueryClient) =>
   queryClient.invalidateQueries({ queryKey: EXECUTIONS_QUERY_KEY })
 
 /**
- * 다시 받은 뒤 화면에 걸린 실행 기록 쿼리가 모두 최신인가.
- * 하나라도 실패했으면 그 화면은 저장 전 데이터를 그대로 들고 있다 — 방금 바꾼 날짜의 버튼이 낡았다 (D13)
+ * 완료 · 취소 결과 — 저장은 성공했다.
+ * `savedAt`은 저장이 끝나고 다시 받기를 시작하기 직전 시각이다. 화면의 쿼리마다 `dataUpdatedAt`이 이보다 앞이면
+ * 그 쿼리는 아직 저장 전 데이터다(다시 받기 실패 · 오프라인으로 멈춤 · 아직 안 받음) — 부르는 쪽이 그 날짜를 막는다 (D17)
  */
-const isRefreshed = (queryClient: QueryClient) =>
-  queryClient
-    .getQueryCache()
-    .findAll({ queryKey: EXECUTIONS_QUERY_KEY, type: 'active' })
-    .every((query) => query.state.status !== 'error')
-
-/** 완료 · 취소 결과 — 저장은 성공했다. `refreshed`가 false면 화면이 아직 저장 전 상태다 */
 export interface ExecutionChangeResult {
-  refreshed: boolean
+  savedAt: number
 }
 
 /**
  * 저장 → 다시 받기를 한 요청처럼 묶는다 — 다시 받기가 끝날 때까지 isPending이 유지돼
- * 성공 화면이 뜰 때 달력이 이미 바뀌어 있다(D7). 다시 받기 실패는 오류가 아니라 결과의 `refreshed`로 알린다
+ * 성공 화면이 뜰 때 달력이 이미 바뀌어 있다(D7). 다시 받기가 실패해도 오류로 바꾸지 않는다 — 판정은 쿼리마다 한다
  */
 const changeThenRefresh = async (
   queryClient: QueryClient,
   change: () => Promise<unknown>
 ): Promise<ExecutionChangeResult> => {
   await change()
+  const savedAt = Date.now()
   await refreshExecutions(queryClient)
-  return { refreshed: isRefreshed(queryClient) }
+  return { savedAt }
 }
+
+/**
+ * 이 쿼리가 저장 뒤 새로 받은 데이터인가 — 다시 받기에 성공한 쿼리는 `dataUpdatedAt`이 저장 시각 이후다.
+ * 실패하면 dataUpdatedAt이 그대로고, 오프라인이면 status는 success인 채 fetchStatus만 paused로 멈춘다 —
+ * 둘 다 "저장 전 데이터"로 걸린다. 다른 달 · 다른 루틴 쿼리의 실패는 이 판정에 끼지 않는다
+ */
+export const isStaleSince = (savedAt: number | undefined, dataUpdatedAt: number) =>
+  savedAt !== undefined && dataUpdatedAt < savedAt
 
 /** 다른 곳에서 먼저 인증 · 취소해 캐시가 낡았다 — 오류는 보이고, 달력은 서버 상태로 돌린다 (D9) */
 const refreshIfStale = (queryClient: QueryClient, error: unknown) => {

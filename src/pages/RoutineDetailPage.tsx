@@ -16,6 +16,7 @@ import { useCategoryLookup } from '@/hooks/useCategories'
 import {
   isLookbackTruncated,
   useCompletedExecutions,
+  isStaleSince,
   useMonthExecutions,
 } from '@/hooks/useExecutions'
 import { useRoutineDetail } from '@/hooks/useRoutines'
@@ -24,13 +25,7 @@ import type { Routine, RoutineStatus } from '@/types/routine'
 import { cn } from '@/utils/cn'
 import { formatFullDate, formatShortDate, isMonth, monthOf } from '@/utils/calendar'
 import { canCompleteDate, classifyCalendarDay, type CalendarCellState } from '@/utils/calendarCell'
-import {
-  addDays,
-  deriveRoutineStatus,
-  formatMonthDay,
-  scheduleLabel,
-  serverToday,
-} from '@/utils/routine'
+import { addDays, deriveRoutineStatus, scheduleLabel, serverToday } from '@/utils/routine'
 import NotFoundPage from './NotFoundPage'
 import styles from './RoutineDetailPage.module.css'
 
@@ -42,20 +37,27 @@ const STATUS_META: Record<RoutineStatus, { label: string; className: string }> =
 
 const RECENT_COUNT = 3
 
-/** 열려 있는 인증 대화상자 — 인증 모달(날짜) 또는 인증 상세(완료한 기록) */
-type ExecutionTarget = { kind: 'complete'; date: string } | { kind: 'detail'; execution: Execution }
+/**
+ * 열려 있는 인증 대화상자 — 인증 모달(날짜) 또는 인증 상세(완료한 기록).
+ * `trigger`는 실제로 누른 버튼이다 — Safari는 클릭한 버튼에 포커스를 주지 않아 대화상자가 기억한 연 자리가 틀릴 수 있다 (D19)
+ */
+type ExecutionTarget =
+  | { kind: 'complete'; date: string; trigger: HTMLElement | null }
+  | { kind: 'detail'; execution: Execution; trigger: HTMLElement | null }
+
+const targetDate = (target: ExecutionTarget) =>
+  target.kind === 'complete' ? target.date : target.execution.scheduledDate
 
 /**
- * 저장은 됐는데 다시 받지 못한 날짜 → 잠근 시각 (D13).
- * 그 날짜를 그리는 쿼리가 이 시각보다 새로 받아질 때까지 버튼을 막는다 — 낡은 버튼으로 같은 요청을 다시 보내지 않게.
- * 쿼리마다(이번 달 · 보는 달 · 최근 인증) 자기 `dataUpdatedAt`으로 따로 판정하므로 따로 지우지 않아도 된다
+ * 저장한 날짜 → 저장 시각 (D17).
+ * 그 날짜를 그리는 쿼리마다 자기 `dataUpdatedAt`이 저장 시각보다 앞이면 아직 저장 전 데이터다 — 버튼을 막는다.
+ * 다시 받기에 성공한 쿼리는 저절로 풀리고, 실패 · 오프라인으로 멈춘 쿼리는 새로 받을 때까지 잠긴다.
+ * 쿼리마다 따로 판정하므로 따로 지우지 않아도 된다
  */
-type StaleLocks = ReadonlyMap<string, number>
+type SavedDates = ReadonlyMap<string, number>
 
-const isLocked = (locks: StaleLocks, date: string, dataUpdatedAt: number) => {
-  const lockedAt = locks.get(date)
-  return lockedAt !== undefined && dataUpdatedAt <= lockedAt
-}
+const isLocked = (saved: SavedDates, date: string, dataUpdatedAt: number) =>
+  isStaleSince(saved.get(date), dataUpdatedAt)
 
 /** 데이터는 있는데 다시 받기가 실패했다 — 화면은 남기고 낡았다는 것만 알린다 (D13) */
 const StaleNotice = ({ onRetry }: { onRetry: () => void }) => (
@@ -115,7 +117,7 @@ const ErrorState = ({ message, onRetry }: { message: string; onRetry: () => void
 interface CalendarSectionProps {
   routine: Routine
   today: string
-  locks: StaleLocks
+  locks: SavedDates
   onOpen: (target: ExecutionTarget) => void
 }
 
@@ -169,10 +171,10 @@ const CalendarSection = ({ routine, today, locks, onOpen }: CalendarSectionProps
           !isLocked(locks, date, query.dataUpdatedAt) &&
           (state === 'completed' || canCompleteDate(routine, byDate.get(date)))
         }
-        onDateClick={(date, state) => {
+        onDateClick={(date, state, trigger) => {
           const execution = byDate.get(date)
-          if (state === 'completed' && execution) onOpen({ kind: 'detail', execution })
-          else onOpen({ kind: 'complete', date })
+          if (state === 'completed' && execution) onOpen({ kind: 'detail', execution, trigger })
+          else onOpen({ kind: 'complete', date, trigger })
         }}
         // renderWeekAside(주 게이지)는 넘기지 않는다 — #60 주별 집계 뒤에 켠다
       />
@@ -209,7 +211,7 @@ const RecentItem = ({ execution, today, locked, onOpen }: RecentItemProps) => {
       <button
         type="button"
         className={styles.recentButton}
-        onClick={() => onOpen({ kind: 'detail', execution })}
+        onClick={(e) => onOpen({ kind: 'detail', execution, trigger: e.currentTarget })}
         disabled={locked}
       >
         {execution.photoUrl ? (
@@ -244,7 +246,7 @@ const RecentItem = ({ execution, today, locked, onOpen }: RecentItemProps) => {
 interface RecentSectionProps {
   query: ReturnType<typeof useCompletedExecutions>
   today: string
-  locks: StaleLocks
+  locks: SavedDates
   onOpen: (target: ExecutionTarget) => void
   /** 조회가 시작일까지 닿지 못했나 — 비어 있어도 "아직 없다"고 단정하지 않는다 */
   truncated: boolean
@@ -456,7 +458,7 @@ const TodayButton = ({
 }: {
   routine: Routine
   today: string
-  locks: StaleLocks
+  locks: SavedDates
   onOpen: (target: ExecutionTarget) => void
 }) => {
   const query = useMonthExecutions(routine.routineId, monthOf(today))
@@ -469,7 +471,7 @@ const TodayButton = ({
     <button
       type="button"
       className={cn(shared.btn, shared.btnPrimary, styles.todayButton)}
-      onClick={() => onOpen({ kind: 'complete', date: today })}
+      onClick={(e) => onOpen({ kind: 'complete', date: today, trigger: e.currentTarget })}
     >
       ✓ 오늘 인증하기
     </button>
@@ -488,33 +490,33 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
   const [editLock, setEditLock] = useState<RoutineEditLock | null>(null)
   const [stopping, setStopping] = useState(false)
   const [target, setTarget] = useState<ExecutionTarget | null>(null)
-  const [locks, setLocks] = useState<StaleLocks>(new Map())
-  const lockDate = (date: string) => setLocks((prev) => new Map(prev).set(date, Date.now()))
+  const [locks, setLocks] = useState<SavedDates>(new Map())
+  const markSaved = (date: string, savedAt: number) =>
+    setLocks((prev) => new Map(prev).set(date, savedAt))
 
   /**
-   * 대화상자를 연 자리가 닫는 사이 사라질 수 있다 — 인증하면 "오늘 인증하기"가, 취소하면 최근 인증 항목이 없어진다.
-   * 공용 훅(useDialogFocus)은 연 자리가 남아 있을 때만 돌려주므로, 포커스가 body에 남았으면 여기서 옮긴다:
-   * 같은 날짜의 달력 칸 → 달력 제목 (D12)
+   * 닫은 뒤 포커스 — 공용 훅(useDialogFocus)이 연 자리로 돌려주지만, 둘 다 빗나갈 수 있다:
+   * 연 버튼이 닫는 사이 사라지거나(인증하면 "오늘 인증하기", 취소하면 최근 인증 항목),
+   * Safari처럼 클릭이 버튼에 포커스를 주지 않아 연 자리가 body로 잡힌 경우다.
+   * 포커스가 body에 남았으면 여기서 옮긴다: 실제로 누른 버튼 → 같은 날짜(`data-date`)의 달력 칸 → 달력 제목 (D12 · D19)
    */
   const calendarRef = useRef<HTMLDivElement>(null)
-  const returnFocusDate = useRef<string | null>(null)
+  const closedTarget = useRef<ExecutionTarget | null>(null)
   const closeTarget = () => {
-    if (target) {
-      returnFocusDate.current =
-        target.kind === 'complete' ? target.date : target.execution.scheduledDate
-    }
+    closedTarget.current = target
     setTarget(null)
   }
   // 닫힌 대화상자의 정리(연 자리로 포커스)가 끝난 뒤에 돈다 — React는 지우는 effect를 먼저 모두 돌린다
   useEffect(() => {
-    const date = returnFocusDate.current
-    if (target !== null || date === null) return
-    returnFocusDate.current = null
+    const closed = closedTarget.current
+    if (target !== null || closed === null) return
+    closedTarget.current = null
     if (document.activeElement && document.activeElement !== document.body) return
     const root = calendarRef.current
-    const cell = root?.querySelector<HTMLElement>(`button[aria-label^="${formatMonthDay(date)} "]`)
+    const trigger = closed.trigger?.isConnected ? closed.trigger : null
+    const cell = root?.querySelector<HTMLElement>(`button[data-date="${targetDate(closed)}"]`)
     const heading = root?.querySelector<HTMLElement>('#calendar-heading')
-    ;(cell ?? heading)?.focus()
+    ;(trigger ?? cell ?? heading)?.focus()
   }, [target])
 
   return (
@@ -581,7 +583,7 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
           date={target.date}
           today={today}
           onClose={closeTarget}
-          onStale={lockDate}
+          onSaved={markSaved}
         />
       )}
       {target?.kind === 'detail' && (
@@ -591,7 +593,7 @@ const RoutineDetail = ({ routine }: { routine: Routine }) => {
           execution={target.execution}
           today={today}
           onClose={closeTarget}
-          onStale={lockDate}
+          onSaved={markSaved}
         />
       )}
     </div>

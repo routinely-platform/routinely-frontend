@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { onlineManager, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -581,6 +581,8 @@ describe('RoutineDetailPage', () => {
         if (params.status === 'COMPLETED') return completedRows
         throw new Error('fail')
       })
+      // 저장은 처음 조회보다 뒤에 일어난다 — 멈춘 시계에서는 둘이 같은 시각이 된다
+      vi.setSystemTime(new Date(`${TODAY}T03:00:30Z`))
       await user.click(within(dialog).getByRole('button', { name: '인증 완료' }))
       expect(
         await screen.findByRole('dialog', { name: '지난 날짜를 채웠어요' })
@@ -602,6 +604,72 @@ describe('RoutineDetailPage', () => {
 
       expect(await cellButton(/^11월 6일 · 다 한 날/)).toBeInTheDocument()
       expect(screen.queryByText(/최신 기록을 불러오지 못했어요/)).not.toBeInTheDocument()
+    })
+
+    it('다른 쿼리(최근 인증)만 다시 받기에 실패하면 새로 받은 달력 칸은 막지 않는다 (D17)', async () => {
+      mockedComplete.mockResolvedValue(DONE_6)
+      const user = renderPage()
+      await user.click(await cellButton(/^11월 6일 · 채울 수 있는 날/))
+      const dialog = await screen.findByRole('dialog')
+
+      mockedGetExecutions.mockImplementation(async (params) => {
+        if (params.status === 'COMPLETED') throw new Error('fail')
+        return MONTH_AFTER_6
+      })
+      vi.setSystemTime(new Date(`${TODAY}T03:00:30Z`))
+      await user.click(within(dialog).getByRole('button', { name: '인증 완료' }))
+      await screen.findByRole('dialog', { name: '지난 날짜를 채웠어요' })
+      await user.click(screen.getAllByRole('button', { name: '닫기' })[1])
+
+      // 달력은 저장 뒤 새로 받았다 — 칸은 버튼이고 상세를 열 수 있다
+      expect(await cellButton(/^11월 6일 · 다 한 날/)).toHaveFocus()
+      // 실패한 최근 인증 쪽에만 안내가 뜬다
+      expect(screen.getAllByText(/최신 기록을 불러오지 못했어요/)).toHaveLength(1)
+    })
+
+    it('오프라인으로 다시 받기가 멈추면 그 날짜를 막고, 다시 연결되어 받으면 푼다 (D17)', async () => {
+      // 저장은 성공했고, 응답을 받은 직후 · 다시 받기 전에 연결이 끊긴다
+      mockedComplete.mockImplementation(async () => {
+        onlineManager.setOnline(false)
+        return DONE_6
+      })
+      const user = renderPage()
+      await user.click(await cellButton(/^11월 6일 · 채울 수 있는 날/))
+      const dialog = await screen.findByRole('dialog')
+
+      vi.setSystemTime(new Date(`${TODAY}T03:00:30Z`))
+      monthRows = MONTH_AFTER_6
+      try {
+        await user.click(within(dialog).getByRole('button', { name: '인증 완료' }))
+        await screen.findByRole('dialog', { name: '지난 날짜를 채웠어요' })
+        await user.click(screen.getAllByRole('button', { name: '닫기' })[1])
+
+        // 다시 받기가 멈춰 칸은 저장 전 모습 — 같은 요청을 다시 보내지 않게 버튼이 아니다
+        expect(screen.getByLabelText(/^11월 6일 · 채울 수 있는 날/).tagName).not.toBe('BUTTON')
+      } finally {
+        await act(async () => onlineManager.setOnline(true))
+      }
+      vi.setSystemTime(new Date(`${TODAY}T03:01:00Z`))
+      expect(await cellButton(/^11월 6일 · 다 한 날/)).toBeInTheDocument()
+    })
+
+    it('클릭이 버튼에 포커스를 주지 않아도(Safari) 닫으면 실제로 누른 버튼으로 돌아간다 (D19)', async () => {
+      renderPage()
+      const item = (await screen.findByText('해 뜨는 거 보고 왔다')).closest('button')!
+      // Safari처럼 포커스 없이 누른다 — 대화상자가 기억하는 연 자리는 body다
+      ;(document.activeElement as HTMLElement | null)?.blur()
+      fireEvent.click(item)
+      const detail = await screen.findByRole('dialog', { name: '아침 러닝' })
+      fireEvent.click(within(detail).getAllByRole('button', { name: '닫기' })[0])
+
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      expect(item).toHaveFocus()
+    })
+
+    it('달력 칸은 날짜를 data-date로 정확히 가진다 — aria-label에는 연도가 없다 (D19)', async () => {
+      renderPage()
+      const cellEl = await cellButton(/^11월 6일 · 채울 수 있는 날/)
+      expect(cellEl).toHaveAttribute('data-date', '2026-11-06')
     })
 
     it('완료한 날 → 인증 상세 위에 취소 확인창 — 맨 위 창을 닫으면 [인증 취소]로, 상세를 닫으면 칸으로 (PR #87 후속)', async () => {

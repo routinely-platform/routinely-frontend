@@ -39,7 +39,7 @@ export interface RoutineCalendarProps {
    * 칸을 눌렀을 때 — 넘기지 않으면 칸은 눌리지 않는다.
    * 루틴 상세(#20)는 미완료 → 인증 모달, 완료 → 인증 상세를 연다
    */
-  onDateClick?: (date: string, state: CalendarCellState) => void
+  onDateClick?: (date: string, state: CalendarCellState, button: HTMLButtonElement) => void
   /**
    * 상태만으로 누를 수 있는 칸(CLICKABLE) 중에서 더 거른다 — 넘기지 않으면 상태만 본다.
    * 빈도형의 지난 날(`noRecord`)은 서버가 행을 주지 않아, 지금 인증할 수 있는지는 부르는 쪽이 판단한다
@@ -169,7 +169,9 @@ const RoutineCalendar = ({
                           type="button"
                           className={cn(className, styles.clickable)}
                           aria-label={label}
-                          onClick={() => onDateClick(date, state)}
+                          // 칸을 날짜로 정확히 찾는 자리 — aria-label에는 연도가 없다 (D19)
+                          data-date={date}
+                          onClick={(e) => onDateClick(date, state, e.currentTarget)}
                         >
                           {day}
                         </button>

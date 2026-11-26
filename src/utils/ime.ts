@@ -6,23 +6,39 @@ import type { KeyboardEvent as ReactKeyboardEvent } from 'react'
  */
 export const COMPOSITION_END_GRACE_MS = 100
 
-// 마지막으로 조합이 끝난 시각 — 어느 입력에서 끝났든 문서 하나에서 잰다
+// 한글 자모 · 호환 자모 · 완성형 음절
+const HANGUL = /[ᄀ-ᇿ㄰-㆏가-힯]/
+
+// 마지막 compositionend 시각 — 어느 입력에서 끝났든 문서 하나에서 잰다
 let lastCompositionEndAt = Number.NEGATIVE_INFINITY
 
-const markCompositionEnd = () => {
-  lastCompositionEndAt = performance.now()
+// 마지막 한글 바꿔 넣기(Safari textarea) — 시각과 일어난 요소를 함께 둔다
+let lastHangulReplacement: { at: number; target: EventTarget | null } = {
+  at: Number.NEGATIVE_INFINITY,
+  target: null,
 }
 
 if (typeof document !== 'undefined') {
   // 캡처 단계 — 다른 리스너가 전파를 막아도 시각은 남긴다
-  document.addEventListener('compositionend', markCompositionEnd, true)
-  // Safari는 textarea에서 한글을 조합 이벤트 없이 "바꿔 넣기"로 넣는다(아래 isComposingKeyEvent 설명).
-  // 조합을 확정할 때도 바꿔 넣기 입력이 키보다 먼저 온다 — compositionend와 같은 신호로 본다
+  document.addEventListener(
+    'compositionend',
+    () => {
+      lastCompositionEndAt = performance.now()
+    },
+    true
+  )
+  // Safari textarea는 한글을 조합 이벤트 없이 "바꿔 넣기"로 넣고, 조합을 확정할 때도 바꿔 넣기가 키보다 먼저 온다.
+  // 자동 고침(영문 철자 교정)도 바꿔 넣기라서 한글이 들어 있을 때만 기록한다 (D18)
   document.addEventListener(
     'input',
     (event) => {
-      if (event instanceof InputEvent && event.inputType === 'insertReplacementText') {
-        markCompositionEnd()
+      if (
+        event instanceof InputEvent &&
+        event.inputType === 'insertReplacementText' &&
+        event.data !== null &&
+        HANGUL.test(event.data)
+      ) {
+        lastHangulReplacement = { at: performance.now(), target: event.target }
       }
     },
     true
@@ -40,15 +56,18 @@ if (typeof document !== 'undefined') {
  * - Safari textarea(실측 2026-11-26): **조합 이벤트가 아예 없다.** 첫 자음은 insertText("ㄱ"),
  *   모음이 붙으면 insertReplacementText("기")로 바꿔 넣는다. Esc를 누르면 insertReplacementText(확정)가
  *   먼저 오고 1~2ms 뒤 keydown(isComposing: false, keyCode: 27)이 온다 — 위 둘 어느 신호도 없다
- * 그래서 isComposing · 229에 더해 조합 확정(compositionend · insertReplacementText) 직후인지도 본다.
- * 바꿔 넣기는 Safari 자동 고침에서도 오지만, 그 직후 0.1초 안의 키 하나를 무시할 뿐이라 해가 없다
+ * 그래서 isComposing · 229에 더해 조합 확정 직후인지도 본다.
+ * 바꿔 넣기는 **한글을 바꿔 넣은 바로 그 요소에서 누른 키**만 본다 — 자동 고침 직후나 다른 버튼의 Esc · Enter는 삼키지 않는다 (D18)
  */
 export function isComposingKeyEvent(event: KeyboardEvent | ReactKeyboardEvent): boolean {
   const native = 'nativeEvent' in event ? event.nativeEvent : event
+  const now = performance.now()
   return (
     native.isComposing ||
     native.keyCode === 229 ||
-    performance.now() - lastCompositionEndAt < COMPOSITION_END_GRACE_MS
+    now - lastCompositionEndAt < COMPOSITION_END_GRACE_MS ||
+    (now - lastHangulReplacement.at < COMPOSITION_END_GRACE_MS &&
+      native.target === lastHangulReplacement.target)
   )
 }
 

@@ -8,7 +8,7 @@ import { useCompleteExecution } from '@/hooks/useExecutions'
 import type { Routine } from '@/types/routine'
 import { formatDateWithWeekday } from '@/utils/calendar'
 import { cn } from '@/utils/cn'
-import { executionErrorMessage } from './executionErrors'
+import { executionErrorCode, executionErrorMessage, PHOTO_ERROR_CODES } from './executionErrors'
 import { EXECUTION_PHOTO_ACCEPT, validateExecutionPhoto } from './executionPhoto'
 import PhotoPreview from './PhotoPreview'
 import styles from './execution.module.css'
@@ -28,9 +28,9 @@ interface ExecutionDialogProps {
   today: string
   onClose: () => void
   /**
-   * 저장은 됐는데 화면의 기록을 다시 받지 못했다 — 부르는 쪽이 그 날짜의 낡은 버튼을 막는다 (D13)
+   * 저장이 끝났다 — 부르는 쪽이 이 날짜를 그리는 쿼리마다 `savedAt` 뒤에 새로 받았는지 보고 낡은 버튼을 막는다 (D17)
    */
-  onStale?: (date: string) => void
+  onSaved?: (date: string, savedAt: number) => void
 }
 
 interface MemoForm {
@@ -42,7 +42,7 @@ interface MemoForm {
  * 대화상자를 새로 열지 않는 이유: 연 자리(누른 달력 칸)는 대화상자가 처음 그려질 때 한 번 잡힌다.
  * 닫고 새로 열면 새 대화상자는 사라지는 모달 안의 버튼을 연 자리로 잡아, 닫은 뒤 포커스가 갈 곳이 없다
  */
-const ExecutionDialog = ({ routine, date, today, onClose, onStale }: ExecutionDialogProps) => {
+const ExecutionDialog = ({ routine, date, today, onClose, onSaved }: ExecutionDialogProps) => {
   const [step, setStep] = useState<'form' | 'success'>('form')
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoError, setPhotoError] = useState<string | null>(null)
@@ -77,15 +77,19 @@ const ExecutionDialog = ({ routine, date, today, onClose, onStale }: ExecutionDi
     focusPickerOnMount.current = true
     setPhoto(null)
     setPhotoError(null)
+    // 방금 뺀 사진 때문에 난 서버 오류도 함께 지운다 — 남겨 두면 "사진 없이 기록돼요" 위에 사진 오류가 보인다.
+    // 네트워크 오류처럼 사진과 상관없는 오류는 남긴다 (D19)
+    const code = executionErrorCode(error)
+    if (code && PHOTO_ERROR_CODES.has(code)) reset()
   }
 
   const onSubmit = handleSubmit(({ memo }) =>
     mutate(
       { photo, memo },
       {
-        onSuccess: ({ refreshed }) => {
-          // 저장은 성공했다 — 성공 단계는 그대로 보이고, 낡은 화면은 부르는 쪽이 막는다
-          if (!refreshed) onStale?.(date)
+        onSuccess: ({ savedAt }) => {
+          // 저장은 성공했다 — 성공 단계는 그대로 보이고, 다시 받지 못한 화면은 부르는 쪽이 막는다
+          onSaved?.(date, savedAt)
           setStep('success')
         },
       }
