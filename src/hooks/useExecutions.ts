@@ -1,6 +1,12 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query'
 
-import { getExecutions } from '@/api/execution'
+import {
+  cancelExecution,
+  completeExecution,
+  getExecutions,
+  type CompleteExecutionInput,
+} from '@/api/execution'
+import { executionErrorCode, STALE_CACHE_CODES } from '@/components/execution/executionErrors'
 import type { Routine } from '@/types/routine'
 import { monthRange } from '@/utils/calendar'
 import { addDays } from '@/utils/routine'
@@ -56,5 +62,71 @@ export function useCompletedExecutions(routine: Routine | null | undefined, toda
       })
     },
     enabled: !!routine,
+  })
+}
+
+// ─── 완료 · 취소 ────────────────────────────────────────────────────────
+
+/**
+ * 실행 기록 전부를 다시 받는다 — 접두사 `['executions']` 하나로 루틴 상세 달력 · 최근 인증이 함께 따라오고,
+ * 같은 접두사를 쓰는 화면(홈 · 통계)이 생기면 그대로 따라온다.
+ * 캐시를 응답으로 직접 고치지 않는다 — 취소한 날이 PENDING인지 MISSED인지, 다시 인증할 수 있는지(`backfillable`)는
+ * 서버가 파생한다. 클라이언트가 계산하면 그 규칙을 복제하게 된다 (WORKPLAN D7)
+ */
+const refreshExecutions = (queryClient: QueryClient) =>
+  // 활성 쿼리 refetch가 실패해도 reject하지 않는다 — 완료 자체는 성공했으니 오류로 바꾸지 않는다
+  queryClient.invalidateQueries({ queryKey: EXECUTIONS_QUERY_KEY })
+
+/**
+ * 완료 · 취소 결과 — 저장은 성공했다.
+ * `savedAt`은 저장이 끝나고 다시 받기를 시작하기 직전 시각이다. 화면의 쿼리마다 `dataUpdatedAt`이 이보다 앞이면
+ * 그 쿼리는 아직 저장 전 데이터다(다시 받기 실패 · 오프라인으로 멈춤 · 아직 안 받음) — 부르는 쪽이 그 날짜를 막는다 (D17)
+ */
+export interface ExecutionChangeResult {
+  savedAt: number
+}
+
+/**
+ * 저장 → 다시 받기를 한 요청처럼 묶는다 — 다시 받기가 끝날 때까지 isPending이 유지돼
+ * 성공 화면이 뜰 때 달력이 이미 바뀌어 있다(D7). 다시 받기가 실패해도 오류로 바꾸지 않는다 — 판정은 쿼리마다 한다
+ */
+const changeThenRefresh = async (
+  queryClient: QueryClient,
+  change: () => Promise<unknown>
+): Promise<ExecutionChangeResult> => {
+  await change()
+  const savedAt = Date.now()
+  await refreshExecutions(queryClient)
+  return { savedAt }
+}
+
+/**
+ * 이 쿼리가 저장 뒤 새로 받은 데이터인가 — 다시 받기에 성공한 쿼리는 `dataUpdatedAt`이 저장 시각 이후다.
+ * 실패하면 dataUpdatedAt이 그대로고, 오프라인이면 status는 success인 채 fetchStatus만 paused로 멈춘다 —
+ * 둘 다 "저장 전 데이터"로 걸린다. 다른 달 · 다른 루틴 쿼리의 실패는 이 판정에 끼지 않는다
+ */
+export const isStaleSince = (savedAt: number | undefined, dataUpdatedAt: number) =>
+  savedAt !== undefined && dataUpdatedAt < savedAt
+
+/** 다른 곳에서 먼저 인증 · 취소해 캐시가 낡았다 — 오류는 보이고, 달력은 서버 상태로 돌린다 (D9) */
+const refreshIfStale = (queryClient: QueryClient, error: unknown) => {
+  const code = executionErrorCode(error)
+  if (code && STALE_CACHE_CODES.has(code)) void refreshExecutions(queryClient)
+}
+
+export function useCompleteExecution(routineId: number, date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (input: CompleteExecutionInput) =>
+      changeThenRefresh(queryClient, () => completeExecution(routineId, date, input)),
+    onError: (error) => refreshIfStale(queryClient, error),
+  })
+}
+
+export function useCancelExecution(routineId: number, date: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => changeThenRefresh(queryClient, () => cancelExecution(routineId, date)),
+    onError: (error) => refreshIfStale(queryClient, error),
   })
 }

@@ -37,9 +37,14 @@ export interface RoutineCalendarProps {
   legend: CalendarCellState[]
   /**
    * 칸을 눌렀을 때 — 넘기지 않으면 칸은 눌리지 않는다.
-   * #63은 넘기지 않는다. 인증 모달 · 인증 상세는 #20이 배선한다
+   * 루틴 상세(#20)는 미완료 → 인증 모달, 완료 → 인증 상세를 연다
    */
-  onDateClick?: (date: string, state: CalendarCellState) => void
+  onDateClick?: (date: string, state: CalendarCellState, button: HTMLButtonElement) => void
+  /**
+   * 상태만으로 누를 수 있는 칸(CLICKABLE) 중에서 더 거른다 — 넘기지 않으면 상태만 본다.
+   * 빈도형의 지난 날(`noRecord`)은 서버가 행을 주지 않아, 지금 인증할 수 있는지는 부르는 쪽이 판단한다
+   */
+  isDateClickable?: (date: string, state: CalendarCellState) => boolean
   /**
    * 8번째 열 — 주 게이지 자리(#60 주별 집계 뒤에 켠다). 넘기지 않으면 열 자체가 없다.
    * 인자는 그 주의 7칸(그 달이 아닌 칸은 null)
@@ -70,6 +75,7 @@ const RoutineCalendar = ({
   getCellState,
   legend,
   onDateClick,
+  isDateClickable,
   renderWeekAside,
 }: RoutineCalendarProps) => {
   const weeks = buildMonthGrid(month)
@@ -152,7 +158,10 @@ const RoutineCalendar = ({
                     CELL_CLASS[state],
                     date === today && styles.today
                   )
-                  const clickable = onDateClick !== undefined && CLICKABLE[state]
+                  const clickable =
+                    onDateClick !== undefined &&
+                    CLICKABLE[state] &&
+                    (isDateClickable?.(date, state) ?? true)
                   return (
                     <div key={date} role="gridcell" className={styles.cellWrap}>
                       {clickable ? (
@@ -160,7 +169,9 @@ const RoutineCalendar = ({
                           type="button"
                           className={cn(className, styles.clickable)}
                           aria-label={label}
-                          onClick={() => onDateClick(date, state)}
+                          // 칸을 날짜로 정확히 찾는 자리 — aria-label에는 연도가 없다 (D19)
+                          data-date={date}
+                          onClick={(e) => onDateClick(date, state, e.currentTarget)}
                         >
                           {day}
                         </button>
